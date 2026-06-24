@@ -1,3 +1,8 @@
+# ==========================================================
+# INDICATORS
+# V6.1
+# ==========================================================
+
 import pandas as pd
 
 from ta.trend import EMAIndicator
@@ -6,12 +11,13 @@ from config import (
     EMA_FAST,
     EMA_MID,
     EMA_SLOW,
-    RVOL_PERIOD
+    RVOL_PERIOD,
+    RVOL_CAP
 )
 
 
 # ==========================================================
-# EMA
+# AGGIUNGE EMA
 # ==========================================================
 
 def add_ema(df):
@@ -45,15 +51,18 @@ def calculate_rvol(df):
     )
 
     avg_volume = float(
-        df["volume"].iloc[
-            -(RVOL_PERIOD + 2):-2
-        ].mean()
+        df["volume"]
+        .iloc[-(RVOL_PERIOD + 2):-2]
+        .mean()
     )
 
-    if avg_volume == 0:
-        return 0
+    if avg_volume <= 0:
 
-    return current_volume / avg_volume
+        return 0.0
+
+    rvol = current_volume / avg_volume
+
+    return min(rvol, RVOL_CAP)
 
 
 # ==========================================================
@@ -83,7 +92,25 @@ def calculate_trend_score(df):
 
 
 # ==========================================================
-# DATI ULTIMA CANDELA CHIUSA
+# BULL TREND
+# ==========================================================
+
+def bull_trend(trend_score):
+
+    return trend_score == 3
+
+
+# ==========================================================
+# TREND ACCETTABILE
+# ==========================================================
+
+def acceptable_trend(trend_score):
+
+    return trend_score >= 2
+
+
+# ==========================================================
+# ULTIMA CANDELA CHIUSA
 # ==========================================================
 
 def last_candle(df):
@@ -111,41 +138,29 @@ def last_candle(df):
 
 def previous_close(df):
 
-    return float(
-        df.iloc[-3]["close"]
-    )
+    return float(df.iloc[-3]["close"])
 
 
 # ==========================================================
-# TREND RIALZISTA
+# DEBUG EMA
 # ==========================================================
 
-def bull_trend(trend_score):
+def print_trend(
 
-    return trend_score == 3
+    symbol,
 
+    trend_score,
 
-# ==========================================================
-# TREND ACCETTABILE
-# ==========================================================
+    rvol
 
-def acceptable_trend(trend_score):
-
-    return trend_score >= 2
-
-
-# ==========================================================
-# DEBUG
-# ==========================================================
-
-def print_trend(symbol, trend_score, rvol):
+):
 
     print(
 
-        f"{symbol}"
+        f"[{symbol}] "
 
-        f" | Trend={trend_score}/3"
+        f"Trend={trend_score}/3 "
 
-        f" | RVOL={rvol:.2f}"
+        f"RVOL={rvol:.2f}"
 
     )
