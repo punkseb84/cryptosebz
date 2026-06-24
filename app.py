@@ -4,8 +4,6 @@ import pandas as pd
 
 from ta.trend import EMAIndicator
 
-pre_long = []
-
 # ==========================================
 # TELEGRAM
 # ==========================================
@@ -50,6 +48,7 @@ COINS = {
 }
 
 watchlist = []
+pre_long = []
 signals = []
 
 # ==========================================
@@ -125,12 +124,10 @@ for symbol, pair in COINS.items():
             window=200
         ).ema_indicator()
 
-        # Ultima candela 4H CHIUSA
         close = float(df.iloc[-2]["close"])
         open_price = float(df.iloc[-2]["open"])
         low = float(df.iloc[-2]["low"])
 
-        # Candela chiusa precedente
         prev_close = float(df.iloc[-3]["close"])
 
         ema20 = float(df.iloc[-2]["ema20"])
@@ -148,16 +145,14 @@ for symbol, pair in COINS.items():
         if ema50 > ema200:
             trend_score += 1
 
-        bull_trend = (trend_score == 3)
+        bull_trend = trend_score == 3
 
         # ==================================
         # VOLUME
         # ==================================
 
-        # Volume dell'ultima candela CHIUSA
         current_volume = float(df.iloc[-2]["volume"])
 
-        # Media delle 20 candele chiuse precedenti
         avg_volume = float(
             df["volume"].iloc[-22:-2].mean()
         )
@@ -208,18 +203,10 @@ for symbol, pair in COINS.items():
             / close
         ) * 100
 
-        if pre_long:
-
-            message += "🟠 PRE-LONG\n\n"
-
-            for p in pre_long:
-
-                message += (
-                f"{p['symbol']}\n"
-                f"Score: {p['score']:.1f}\n"
-                f"Trend Score: {p['trend_score']}/3\n"
-                f"Distanza: {p['distance']:.2f}%\n"
-                f"RVOL: {p['rvol']:.2f}\n\n"
+        score = (
+            trend_score * 50
+            + rvol * 20
+            - distance * 5
         )
 
         # ==================================
@@ -229,39 +216,38 @@ for symbol, pair in COINS.items():
         if distance <= 3:
 
             watchlist.append(
-               {
-    "symbol": symbol,
-    "close": close,
-    "resistance": resistance,
-    "distance": distance,
-    "bull_trend": bull_trend,
-    "trend_score": trend_score,
-    "rvol": rvol,
-    "score": score
-}
+                {
+                    "symbol": symbol,
+                    "close": close,
+                    "resistance": resistance,
+                    "distance": distance,
+                    "bull_trend": bull_trend,
+                    "trend_score": trend_score,
+                    "rvol": rvol,
+                    "score": score
+                }
             )
 
-        score = (
-        trend_score * 50
-        + rvol * 20
-        - distance * 5
-)
+# ==================================
+# PRE-LONG
+# ==================================
 
         if (
             trend_score >= 2
             and rvol > 1.2
             and distance <= 2
-):
-                pre_long.append(
-        {
-                "symbol": symbol,
-                "close": close,
-                "distance": distance,
-                "trend_score": trend_score,
-                "rvol": rvol,
-                "score": score
-        }
-    )
+        ):
+
+            pre_long.append(
+                {
+                    "symbol": symbol,
+                    "close": close,
+                    "distance": distance,
+                    "trend_score": trend_score,
+                    "rvol": rvol,
+                    "score": score
+                }
+            )
 
         # ==================================
         # BREAKOUT
@@ -308,24 +294,23 @@ for symbol, pair in COINS.items():
             f"Res={resistance:.2f} "
             f"Dist={distance:.2f}% "
             f"RVOL={rvol:.2f}"
-            f"(4H CLOSED)"
         )
 
     except Exception as e:
 
         print(f"Errore {symbol}: {e}")
 
-watchlist = sorted(
-    watchlist,
-    key=lambda x: x["score"],
-    reverse=True
-)[:5]
+        watchlist = sorted(
+            watchlist,
+            key=lambda x: x["score"],
+            reverse=True
+        )
 
-pre_long = sorted(
-    pre_long,
-    key=lambda x: x["score"],
-    reverse=True
-)[:5]
+        pre_long = sorted(
+            pre_long,
+            key=lambda x: x["score"],
+            reverse=True
+        )
 
 # ==========================================
 # TELEGRAM
@@ -346,6 +331,20 @@ if signals:
             f"TP1: {s['tp1']:.2f}\n"
             f"TP2: {s['tp2']:.2f}\n"
             f"RVOL: {s['rvol']:.2f}\n\n"
+        )
+
+if pre_long:
+
+    message += "🟠 PRE-LONG\n\n"
+
+    for p in pre_long:
+
+        message += (
+            f"{p['symbol']}\n"
+            f"Score: {p['score']:.1f}\n"
+            f"Trend Score: {p['trend_score']}/3\n"
+            f"Distanza: {p['distance']:.2f}%\n"
+            f"RVOL: {p['rvol']:.2f}\n\n"
         )
 
 if watchlist:
