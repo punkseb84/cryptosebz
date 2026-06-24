@@ -4,6 +4,8 @@ import pandas as pd
 
 from ta.trend import EMAIndicator
 
+pre_long = []
+
 # ==========================================
 # TELEGRAM
 # ==========================================
@@ -135,11 +137,18 @@ for symbol, pair in COINS.items():
         ema50 = float(df.iloc[-2]["ema50"])
         ema200 = float(df.iloc[-2]["ema200"])
 
-        bull_trend = (
-            close > ema20
-            and ema20 > ema50
-            and ema50 > ema200
-        )
+        trend_score = 0
+
+        if close > ema20:
+            trend_score += 1
+
+        if ema20 > ema50:
+            trend_score += 1
+
+        if ema50 > ema200:
+            trend_score += 1
+
+        bull_trend = (trend_score == 3)
 
         # ==================================
         # VOLUME
@@ -199,6 +208,20 @@ for symbol, pair in COINS.items():
             / close
         ) * 100
 
+        if pre_long:
+
+    message += "🟠 PRE-LONG\n\n"
+
+    for p in pre_long:
+
+        message += (
+            f"{p['symbol']}\n"
+            f"Score: {p['score']:.1f}\n"
+            f"Trend Score: {p['trend_score']}/3\n"
+            f"Distanza: {p['distance']:.2f}%\n"
+            f"RVOL: {p['rvol']:.2f}\n\n"
+        )
+
         # ==================================
         # WATCHLIST
         # ==================================
@@ -206,15 +229,39 @@ for symbol, pair in COINS.items():
         if distance <= 3:
 
             watchlist.append(
-                {
-                    "symbol": symbol,
-                    "close": close,
-                    "resistance": resistance,
-                    "distance": distance,
-                    "bull_trend": bull_trend,
-                    "rvol": rvol
-                }
+               {
+    "symbol": symbol,
+    "close": close,
+    "resistance": resistance,
+    "distance": distance,
+    "bull_trend": bull_trend,
+    "trend_score": trend_score,
+    "rvol": rvol,
+    "score": score
+}
             )
+
+        score = (
+        trend_score * 50
+        + rvol * 20
+        - distance * 5
+)
+
+        if (
+        trend_score >= 2
+        and rvol > 1.2
+        and distance <= 2
+):
+    pre_long.append(
+        {
+            "symbol": symbol,
+            "close": close,
+            "distance": distance,
+            "trend_score": trend_score,
+            "rvol": rvol,
+            "score": score
+        }
+    )
 
         # ==================================
         # BREAKOUT
@@ -222,7 +269,7 @@ for symbol, pair in COINS.items():
 
         breakout = (
             prev_close <= resistance
-            and close > resistance
+            and close > resistance * 1.005
             and close > open_price
         )
 
@@ -268,6 +315,18 @@ for symbol, pair in COINS.items():
 
         print(f"Errore {symbol}: {e}")
 
+watchlist = sorted(
+    watchlist,
+    key=lambda x: x["score"],
+    reverse=True
+)[:5]
+
+pre_long = sorted(
+    pre_long,
+    key=lambda x: x["score"],
+    reverse=True
+)[:5]
+
 # ==========================================
 # TELEGRAM
 # ==========================================
@@ -295,18 +354,15 @@ if watchlist:
 
     for w in watchlist:
 
-        trend_text = (
-            "RIALZISTA"
-            if w["bull_trend"]
-            else "NON RIALZISTA"
-        )
+trend_text = f"{w['trend_score']}/3"
 
         message += (
             f"{w['symbol']}\n"
             f"Prezzo: {w['close']:.2f}\n"
             f"Resistenza: {w['resistance']:.2f}\n"
             f"Distanza: {w['distance']:.2f}%\n"
-            f"Trend: {trend_text}\n"
+            f"Trend Score: {trend_text}\n"
+            f"Score: {w['score']:.1f}\n"
             f"RVOL: {w['rvol']:.2f}\n\n"
         )
 
