@@ -19,8 +19,32 @@ COINS = {
     "BTC": "XBTUSD",
     "ETH": "ETHUSD",
     "SOL": "SOLUSD",
+    "XRP": "XRPUSD",
+    "ADA": "ADAUSD",
+    "DOGE": "DOGEUSD",
     "LINK": "LINKUSD",
-    "AVAX": "AVAXUSD"
+    "AVAX": "AVAXUSD",
+    "DOT": "DOTUSD",
+    "LTC": "LTCUSD",
+    "ATOM": "ATOMUSD",
+    "UNI": "UNIUSD",
+    "AAVE": "AAVEUSD",
+    "FIL": "FILUSD",
+    "ALGO": "ALGOUSD",
+    "ICP": "ICPUSD",
+    "APT": "APTUSD",
+    "ARB": "ARBUSD",
+    "OP": "OPUSD",
+    "NEAR": "NEARUSD",
+    "INJ": "INJUSD",
+    "SUI": "SUIUSD",
+    "SEI": "SEIUSD",
+    "TIA": "TIAUSD",
+    "JUP": "JUPUSD",
+    "SHIB": "SHIBUSD",
+    "PEPE": "PEPEUSD",
+    "ETC": "ETCUSD",
+    "BCH": "BCHUSD"
 }
 
 watchlist = []
