@@ -5,7 +5,8 @@ from config import (
     BREAKOUT_BUFFER,
     RVOL_MIN,
     MAX_WATCHLIST,
-    MAX_PRELONG
+    MAX_PRELONG,
+    MAX_LONG
 )
 
 from utils import (
@@ -54,6 +55,7 @@ def run_scanner():
     watchlist = []
     pre_long = []
     signals = []
+    coins_scanned = 0
 
     for symbol, pair in COINS.items():
 
@@ -73,6 +75,8 @@ def run_scanner():
             # =====================================
 
             df = add_ema(df)
+
+            coins_scanned += 1
 
             candle = last_candle(df)
 
@@ -234,11 +238,14 @@ def run_scanner():
     signals = sorted(
         signals,
         key=lambda x: (
+            x["rr"],
             x["trend_score"],
             x["rvol"]
         ),
         reverse=True
     )
+
+    signals = signals[:MAX_LONG]
 
     # =====================================================
     # TELEGRAM
@@ -265,6 +272,8 @@ def run_scanner():
     print("=" * 60)
 
     print("SCAN COMPLETATO")
+
+    print(f"COINS     : {coins_scanned}")
 
     print(f"LONG      : {len(signals)}")
 
