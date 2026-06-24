@@ -25,9 +25,10 @@ def build_long_section(signals):
             f"Stop: {s['stop']:.2f}\n"
             f"TP1: {s['tp1']:.2f}\n"
             f"TP2: {s['tp2']:.2f}\n"
-            f"RR: {s['rr']:.1f}\n"
+            f"RR: {s['rr']:.2f}\n"
             f"Trend: {s['trend_score']}/3\n"
             f"RVOL: {s['rvol']:.2f}\n\n"
+            f"Supporto: {s['stop']:.2f}\n"
         )
 
     return text
