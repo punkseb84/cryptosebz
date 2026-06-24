@@ -1,6 +1,5 @@
 # ==========================================================
 # PATTERNS
-# V6
 # ==========================================================
 
 
@@ -53,47 +52,42 @@ def find_swing_lows(df):
 
 
 # ==========================================================
-# RESISTENZA PIU' VICINA
+# RESISTENZA VALIDA PIÙ VICINA
 # ==========================================================
 
-def nearest_resistance(close, swing_highs):
+def valid_resistance(close, swing_highs):
 
-    resistances = [
+    valid = []
 
-        x
+    for level in swing_highs:
 
-        for x in swing_highs
+        distance = ((level - close) / close) * 100
 
-        if x > close
+        if distance >= 1:
 
-    ]
+            valid.append(level)
 
-    if not resistances:
+    if not valid:
 
         return None
 
-    return min(resistances)
+    return min(valid)
 
 
 # ==========================================================
-# SUPPORTO PIU' VICINO
+# SUPPORTO PIÙ VICINO
+# (almeno 0.5% sotto il prezzo)
 # ==========================================================
 
-def nearest_support(
-
-    close,
-
-    swing_lows
-
-):
+def nearest_support(close, swing_lows):
 
     supports = [
 
-        x
+        level
 
-        for x in swing_lows
+        for level in swing_lows
 
-        if x < close * (1 - SUPPORT_FILTER)
+        if level < close * 0.995
 
     ]
 
@@ -114,42 +108,7 @@ def distance_percent(price, level):
 
         return None
 
-    return (
-
-        (level - price)
-
-        / price
-
-    ) * 100
-
-
-# ==========================================================
-# FILTRO RESISTENZE
-# ==========================================================
-
-def valid_resistance(close, swing_highs):
-
-    valid = []
-
-    for level in swing_highs:
-
-        distance = (
-
-            (level - close)
-
-            / close
-
-        ) * 100
-
-        if distance >= 1:
-
-            valid.append(level)
-
-    if not valid:
-
-        return None
-
-    return min(valid)
+    return ((level - price) / price) * 100
 
 
 # ==========================================================
@@ -159,13 +118,9 @@ def valid_resistance(close, swing_highs):
 def breakout(
 
     previous_close,
-
     current_close,
-
     current_open,
-
     resistance,
-
     buffer
 
 ):
@@ -178,68 +133,42 @@ def breakout(
 
         previous_close <= resistance
 
-        and current_close > resistance * (1 + buffer)
+        and
 
-        and current_close > current_open
+        current_close > resistance * (1 + buffer)
+
+        and
+
+        current_close > current_open
 
     )
 
 
 # ==========================================================
-# RITEST
-# (V7)
-# ==========================================================
-
-def retest(
-
-    low,
-
-    resistance,
-
-    tolerance=0.002
-
-):
-
-    if resistance is None:
-
-        return False
-
-    return (
-
-        abs(low - resistance)
-
-        / resistance
-
-    ) <= tolerance
-
-
-# ==========================================================
-# STOP SU SWING LOW
+# STOP LOSS
 # ==========================================================
 
 def swing_stop(
 
     support,
-
-    fallback_low
+    candle_low
 
 ):
 
-    if support is None:
+    if support is not None:
 
-        return fallback_low
+        return support
 
-    return support
+    return candle_low
 
 
 # ==========================================================
-# RISK
+# RISCHIO
 # ==========================================================
 
 def calculate_risk(
 
     entry,
-
     stop
 
 ):
@@ -254,14 +183,31 @@ def calculate_risk(
 def take_profit(
 
     entry,
-
     risk,
-
     rr
 
 ):
 
     return entry + (risk * rr)
+
+
+# ==========================================================
+# RETEST
+# ==========================================================
+
+def retest(
+
+    low,
+    resistance,
+    tolerance=0.002
+
+):
+
+    if resistance is None:
+
+        return False
+
+    return abs(low - resistance) / resistance <= tolerance
 
 
 # ==========================================================
@@ -271,9 +217,7 @@ def take_profit(
 def print_levels(
 
     symbol,
-
     support,
-
     resistance
 
 ):
