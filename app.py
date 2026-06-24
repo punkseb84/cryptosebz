@@ -137,8 +137,8 @@ for symbol, pair in COINS.items():
             if x > close
         ]
 
-        if not resistances_above:
-            continue
+       if not resistances_above:
+    continue
 
 valid_resistances = [
     x for x in resistances_above
@@ -149,10 +149,11 @@ if not valid_resistances:
     continue
 
 resistance = min(valid_resistances)
-        distance = (
-            (resistance - close)
-            / close
-        ) * 100
+
+distance = (
+    (resistance - close)
+    / close
+) * 100
 
         # ==================================
         # WATCHLIST
