@@ -298,30 +298,33 @@ for symbol, pair in COINS.items():
 
     except Exception as e:
 
-        print(f"Errore {symbol}: {e}")
+            print(f"Errore {symbol}: {e}")
 
-        pre_long = sorted(
-            pre_long,
-            key=lambda x: x["score"],
-            reverse=True
-        )[:5]
+# ==========================================
+# ORDINA LE LISTE
+# ==========================================
 
-        pre_symbols = {
-            p["symbol"]
-            for p in pre_long
-        }
+pre_long = sorted(
+    pre_long,
+    key=lambda x: x["score"],
+    reverse=True
+)[:5]
 
-        watchlist = [
-            w for w in watchlist
-            if w["symbol"] not in pre_symbols
-        ]
+pre_symbols = {
+    p["symbol"]
+    for p in pre_long
+}
 
-        watchlist = sorted(
-            watchlist,
-            key=lambda x: x["score"],
-            reverse=True
-        )[:5]
+watchlist = [
+    w for w in watchlist
+    if w["symbol"] not in pre_symbols
+]
 
+watchlist = sorted(
+    watchlist,
+    key=lambda x: x["score"],
+    reverse=True
+)[:5]
 
 # ==========================================
 # TELEGRAM
