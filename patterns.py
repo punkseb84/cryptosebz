@@ -79,7 +79,13 @@ def nearest_resistance(close, swing_highs):
 # SUPPORTO PIU' VICINO
 # ==========================================================
 
-def nearest_support(close, swing_lows):
+def nearest_support(
+
+    close,
+
+    swing_lows
+
+):
 
     supports = [
 
@@ -87,7 +93,7 @@ def nearest_support(close, swing_lows):
 
         for x in swing_lows
 
-        if x < close
+        if x < close * (1 - SUPPORT_FILTER)
 
     ]
 
