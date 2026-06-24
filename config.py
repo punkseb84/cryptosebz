@@ -42,9 +42,9 @@ BREAKOUT_BUFFER = 0.005
 # SCORE
 # ==========================================================
 
-TREND_WEIGHT = 100
-RVOL_WEIGHT = 10
-DISTANCE_WEIGHT = 5
+TREND_WEIGHT = 50
+RVOL_WEIGHT = 25
+DISTANCE_WEIGHT = 8
 
 # ==========================================================
 # CLASSIFICHE
