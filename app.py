@@ -354,7 +354,7 @@ if watchlist:
 
     for w in watchlist:
 
-    trend_text = f"{w['trend_score']}/3"
+        trend_text = f"{w['trend_score']}/3"
 
         message += (
             f"{w['symbol']}\n"
