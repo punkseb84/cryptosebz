@@ -1,16 +1,29 @@
+import os
 import requests
 
-url = "https://api.exchange.coinbase.com/products/BTC-USD/candles"
+TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-params = {
-    "granularity": 21600
-}
+message = """
+🚀 Crypto Scanner Online
 
-response = requests.get(url, params=params)
+Primo test riuscito.
 
-print("STATUS:", response.status_code)
+Se ricevi questo messaggio significa che:
 
-data = response.json()
+✅ Railway funziona
+✅ Telegram funziona
+✅ Variabili ambiente funzionano
+"""
 
-print(type(data))
-print(data[:3] if isinstance(data, list) else data)
+url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+
+response = requests.post(
+    url,
+    json={
+        "chat_id": CHAT_ID,
+        "text": message
+    }
+)
+
+print(response.json())
