@@ -151,16 +151,28 @@ for symbol, pair in COINS.items():
         # WATCHLIST
         # ==================================
 
-        if bull_trend and distance <= 3:
+       if watchlist:
 
-            watchlist.append(
-                {
-                    "symbol": symbol,
-                    "close": close,
-                    "resistance": resistance,
-                    "distance": distance
-                }
-            )
+```
+message += "🟡 WATCHLIST\n\n"
+
+for w in watchlist:
+
+    trend_text = (
+        "RIALZISTA"
+        if w["bull_trend"]
+        else "NON RIALZISTA"
+    )
+
+    message += (
+        f"{w['symbol']}\n"
+        f"Prezzo: {w['close']:.2f}\n"
+        f"Resistenza: {w['resistance']:.2f}\n"
+        f"Distanza: {w['distance']:.2f}%\n"
+        f"Trend: {trend_text}\n\n"
+    )
+```
+
 
         # ==================================
         # BREAKOUT
