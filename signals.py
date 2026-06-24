@@ -1,93 +1,17 @@
 # ==========================================================
 # SIGNALS
-# V6
+# V6.1
 # ==========================================================
+
+from config import (
+    TP1_RR,
+    TP2_RR
+)
 
 from patterns import (
     calculate_risk,
-    take_profit,
-    swing_stop
+    take_profit
 )
-
-
-# ==========================================================
-# LONG SETUP
-# ==========================================================
-
-def build_long_signal(
-
-    symbol,
-
-    entry,
-
-    support,
-
-    candle_low,
-
-    resistance,
-
-    rvol,
-
-    trend_score
-
-):
-
-    if support is not None:
-
-        stop = support
-
-    else:
-
-        stop = candle_low
-
-        risk = calculate_risk(
-        entry,
-        stop
-    )
-
-    if risk <= 0:
-
-        return None
-
-    tp1 = take_profit(
-        entry,
-        risk,
-        2
-    )
-
-    tp2 = take_profit(
-        entry,
-        risk,
-        3
-    )
-
-    reward = tp1 - entry
-
-    rr = reward / risk
-
-    return {
-
-        "symbol": symbol,
-
-        "entry": entry,
-
-        "stop": stop,
-
-        "tp1": tp1,
-
-        "tp2": tp2,
-
-        "risk": risk,
-
-        "rr": rr,
-
-        "trend_score": trend_score,
-
-        "resistance": resistance,
-
-        "rvol": rvol
-
-    }
 
 
 # ==========================================================
@@ -95,28 +19,15 @@ def build_long_signal(
 # ==========================================================
 
 def is_long(
-
     trend_score,
-
     breakout,
-
     rvol,
-
     rvol_min
-
 ):
 
     return (
 
-        (
-    trend_score == 3
-    or
-    (
-        trend_score == 2
-        and rvol >= 2
-        and distance <= 1.5
-    )
-)
+        trend_score >= 2
 
         and
 
@@ -130,26 +41,36 @@ def is_long(
 
 
 # ==========================================================
-# PRE LONG
+# PRE-LONG CONDITION
 # ==========================================================
 
 def is_prelong(
-
     trend_score,
-
     distance,
-
     rvol,
-
     distance_limit,
-
     rvol_min
-
 ):
 
     return (
 
-        trend_score >= 2
+        (
+
+            trend_score == 3
+
+            or
+
+            (
+
+                trend_score == 2
+
+                and
+
+                rvol >= 2
+
+            )
+
+        )
 
         and
 
@@ -163,42 +84,118 @@ def is_prelong(
 
 
 # ==========================================================
-# WATCHLIST
+# WATCHLIST CONDITION
 # ==========================================================
 
 def is_watchlist(
-
     distance,
-
     limit
-
 ):
 
     return distance <= limit
 
 
 # ==========================================================
-# CREA RECORD
+# BUILD LONG SIGNAL
 # ==========================================================
 
-def signal_record(
-
+def build_long_signal(
     symbol,
-
-    close,
-
-    resistance,
-
+    entry,
     support,
-
-    distance,
-
-    trend_score,
-
+    candle_low,
+    resistance,
     rvol,
+    trend_score
+):
 
+    # ------------------------------------------
+    # STOP LOSS
+    # ------------------------------------------
+
+    if support is not None:
+
+        stop = support
+
+    else:
+
+        stop = candle_low
+
+    # ------------------------------------------
+    # RISK
+    # ------------------------------------------
+
+    risk = calculate_risk(
+        entry,
+        stop
+    )
+
+    if risk <= 0:
+
+        return None
+
+    # ------------------------------------------
+    # TAKE PROFIT
+    # ------------------------------------------
+
+    tp1 = take_profit(
+        entry,
+        risk,
+        TP1_RR
+    )
+
+    tp2 = take_profit(
+        entry,
+        risk,
+        TP2_RR
+    )
+
+    reward = tp1 - entry
+
+    rr = reward / risk
+
+    # ------------------------------------------
+    # RECORD
+    # ------------------------------------------
+
+    return {
+
+        "symbol": symbol,
+
+        "entry": entry,
+
+        "stop": stop,
+
+        "risk": round(risk, 4),
+
+        "tp1": tp1,
+
+        "tp2": tp2,
+
+        "rr": round(rr, 2),
+
+        "trend_score": trend_score,
+
+        "resistance": resistance,
+
+        "rvol": round(rvol, 2)
+
+    }
+
+
+# ==========================================================
+# WATCHLIST RECORD
+# ==========================================================
+
+def watchlist_record(
+    symbol,
+    close,
+    support,
+    resistance,
+    distance,
+    trend_score,
+    rvol,
     score
-
 ):
 
     return {
@@ -215,9 +212,39 @@ def signal_record(
 
         "trend_score": trend_score,
 
-        "rvol": rvol,
+        "rvol": round(rvol, 2),
 
-        "score": score
+        "score": round(score, 2)
+
+    }
+
+
+# ==========================================================
+# PRELONG RECORD
+# ==========================================================
+
+def prelong_record(
+    symbol,
+    close,
+    distance,
+    trend_score,
+    rvol,
+    score
+):
+
+    return {
+
+        "symbol": symbol,
+
+        "close": close,
+
+        "distance": distance,
+
+        "trend_score": trend_score,
+
+        "rvol": round(rvol, 2),
+
+        "score": round(score, 2)
 
     }
 
@@ -232,14 +259,14 @@ def print_signal(signal):
 
         f"{signal['symbol']}"
 
-        f" LONG"
+        f" | Entry={signal['entry']:.2f}"
 
-        f" Entry={signal['entry']:.2f}"
+        f" | Stop={signal['stop']:.2f}"
 
-        f" Stop={signal['stop']:.2f}"
+        f" | TP1={signal['tp1']:.2f}"
 
-        f" TP1={signal['tp1']:.2f}"
+        f" | TP2={signal['tp2']:.2f}"
 
-        f" TP2={signal['tp2']:.2f}"
+        f" | RR={signal['rr']:.2f}"
 
     )
