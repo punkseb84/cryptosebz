@@ -1,3 +1,8 @@
+# ==========================================================
+# TELEGRAM BOT
+# V6.1
+# ==========================================================
+
 import requests
 
 from config import (
@@ -7,118 +12,14 @@ from config import (
 
 
 # ==========================================================
-# LONG
-# ==========================================================
-
-def build_long_section(signals):
-
-    if not signals:
-        return ""
-
-    text = "🟢 LONG SETUP\n\n"
-
-    for s in signals:
-
-        text += (
-            f"{s['symbol']}\n"
-            f"Entry: {s['entry']:.2f}\n"
-            f"Stop: {s['stop']:.2f}\n"
-            f"TP1: {s['tp1']:.2f}\n"
-            f"TP2: {s['tp2']:.2f}\n"
-            f"RR: {s['rr']:.2f}\n"
-            f"Trend: {s['trend_score']}/3\n"
-            f"RVOL: {s['rvol']:.2f}\n\n"
-            f"Supporto: {s['stop']:.2f}\n"
-        )
-
-    return text
-
-
-# ==========================================================
-# PRE LONG
-# ==========================================================
-
-def build_prelong_section(pre_long):
-
-    if not pre_long:
-        return ""
-
-    text = "🟠 PRE-LONG\n\n"
-
-    for p in pre_long:
-
-        text += (
-            f"{p['symbol']}\n"
-            f"Score: {p['score']:.1f}\n"
-            f"Trend: {p['trend_score']}/3\n"
-            f"Distanza: {p['distance']:.2f}%\n"
-            f"RVOL: {p['rvol']:.2f}\n\n"
-        )
-
-    return text
-
-
-# ==========================================================
-# WATCHLIST
-# ==========================================================
-
-def build_watchlist_section(watchlist):
-
-    if not watchlist:
-        return ""
-
-    text = "🟡 WATCHLIST\n\n"
-
-    for w in watchlist:
-
-        text += (
-            f"{w['symbol']}\n"
-            f"Prezzo: {w['close']:.2f}\n"
-            f"Supporto: {w['support']:.2f}\n"
-            f"Resistenza: {w['resistance']:.2f}\n"
-            f"Distanza: {w['distance']:.2f}%\n"
-            f"Trend: {w['trend_score']}/3\n"
-            f"Score: {w['score']:.1f}\n"
-            f"RVOL: {w['rvol']:.2f}\n\n"
-        )
-
-    return text
-
-
-# ==========================================================
-# BUILD MESSAGE
-# ==========================================================
-
-def build_message(
-
-    signals,
-
-    pre_long,
-
-    watchlist
-
-):
-
-    message = ""
-
-    message += build_long_section(signals)
-
-    message += build_prelong_section(pre_long)
-
-    message += build_watchlist_section(watchlist)
-
-    return message
-
-
-# ==========================================================
-# SEND TELEGRAM
+# INVIO MESSAGGIO
 # ==========================================================
 
 def send_message(message):
 
-    if not message:
+    if not message.strip():
 
-        print("Nessun setup trovato")
+        print("Nessun messaggio da inviare.")
 
         return
 
@@ -139,3 +40,116 @@ def send_message(message):
     )
 
     print(response.json())
+
+
+# ==========================================================
+# COSTRUZIONE MESSAGGIO
+# ==========================================================
+
+def build_message(
+
+    signals,
+
+    pre_long,
+
+    watchlist
+
+):
+
+    message = ""
+
+    # ======================================================
+    # LONG
+    # ======================================================
+
+    if signals:
+
+        message += "🟢 LONG SETUP\n\n"
+
+        for s in signals:
+
+            message += (
+
+                f"🪙 {s['symbol']}\n"
+
+                f"Trend: {s['trend_score']}/3\n"
+
+                f"Entry: {s['entry']:.2f}\n"
+
+                f"Stop: {s['stop']:.2f}\n"
+
+                f"TP1: {s['tp1']:.2f}\n"
+
+                f"TP2: {s['tp2']:.2f}\n"
+
+                f"RR: {s['rr']:.2f}\n"
+
+                f"RVOL: {s['rvol']:.2f}\n\n"
+
+            )
+
+    # ======================================================
+    # PRE LONG
+    # ======================================================
+
+    if pre_long:
+
+        message += "🟠 PRE-LONG\n\n"
+
+        for p in pre_long:
+
+            message += (
+
+                f"🪙 {p['symbol']}\n"
+
+                f"Score: {p['score']:.1f}\n"
+
+                f"Trend: {p['trend_score']}/3\n"
+
+                f"Distanza: {p['distance']:.2f}%\n"
+
+                f"RVOL: {p['rvol']:.2f}\n\n"
+
+            )
+
+    # ======================================================
+    # WATCHLIST
+    # ======================================================
+
+    if watchlist:
+
+        message += "🟡 WATCHLIST\n\n"
+
+        for w in watchlist:
+
+            support = "-"
+
+            if w["support"] is not None:
+
+                support = f"{w['support']:.2f}"
+
+            message += (
+
+                f"🪙 {w['symbol']}\n"
+
+                f"Prezzo: {w['close']:.2f}\n"
+
+                f"Supporto: {support}\n"
+
+                f"Resistenza: {w['resistance']:.2f}\n"
+
+                f"Distanza: {w['distance']:.2f}%\n"
+
+                f"Trend: {w['trend_score']}/3\n"
+
+                f"Score: {w['score']:.1f}\n"
+
+                f"RVOL: {w['rvol']:.2f}\n\n"
+
+            )
+
+    if message == "":
+
+        message = "Nessun setup trovato."
+
+    return message
