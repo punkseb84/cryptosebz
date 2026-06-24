@@ -22,14 +22,9 @@ params = {
 }
 
 response = requests.get(url, params=params)
-
 data = response.json()
 
-print(data)
-
-# Kraken restituisce:
-# result -> XXBTZUSD + last
-
+# Trova il nome della coppia restituita da Kraken
 pair_name = [
     key for key in data["result"].keys()
     if key != "last"
@@ -54,6 +49,8 @@ df = pd.DataFrame(
         "count"
     ]
 )
+
+# Conversione numerica
 
 df["open"] = df["open"].astype(float)
 df["high"] = df["high"].astype(float)
@@ -80,7 +77,7 @@ trend = (
 )
 
 # ==========================================
-# SWING HIGH / LOW
+# SWING HIGH / SWING LOW
 # ==========================================
 
 swing_highs = []
@@ -88,42 +85,66 @@ swing_lows = []
 
 for i in range(2, len(df) - 2):
 
-    high = df.iloc[i]["high"]
+    current_high = df.iloc[i]["high"]
 
     if (
-        high > df.iloc[i - 1]["high"]
-        and high > df.iloc[i - 2]["high"]
-        and high > df.iloc[i + 1]["high"]
-        and high > df.iloc[i + 2]["high"]
+        current_high > df.iloc[i - 1]["high"]
+        and current_high > df.iloc[i - 2]["high"]
+        and current_high > df.iloc[i + 1]["high"]
+        and current_high > df.iloc[i + 2]["high"]
     ):
-        swing_highs.append(high)
+        swing_highs.append(current_high)
 
-    low = df.iloc[i]["low"]
+    current_low = df.iloc[i]["low"]
 
     if (
-        low < df.iloc[i - 1]["low"]
-        and low < df.iloc[i - 2]["low"]
-        and low < df.iloc[i + 1]["low"]
-        and low < df.iloc[i + 2]["low"]
+        current_low < df.iloc[i - 1]["low"]
+        and current_low < df.iloc[i - 2]["low"]
+        and current_low < df.iloc[i + 1]["low"]
+        and current_low < df.iloc[i + 2]["low"]
     ):
-        swing_lows.append(low)
+        swing_lows.append(current_low)
 
 # ==========================================
-# SUPPORTO E RESISTENZA
+# SUPPORTO E RESISTENZA PIÙ VICINI
 # ==========================================
 
-if len(swing_highs) >= 5:
-    resistance = max(swing_highs[-5:])
-else:
-    resistance = max(swing_highs)
+resistances_above = [
+    level for level in swing_highs
+    if level > price
+]
 
-if len(swing_lows) >= 5:
-    support = min(swing_lows[-5:])
-else:
-    support = min(swing_lows)
+supports_below = [
+    level for level in swing_lows
+    if level < price
+]
+
+resistance = (
+    min(resistances_above)
+    if len(resistances_above) > 0
+    else None
+)
+
+support = (
+    max(supports_below)
+    if len(supports_below) > 0
+    else None
+)
+
+res_text = (
+    f"{resistance:.2f}"
+    if resistance is not None
+    else "N/D"
+)
+
+sup_text = (
+    f"{support:.2f}"
+    if support is not None
+    else "N/D"
+)
 
 # ==========================================
-# TELEGRAM MESSAGE
+# MESSAGGIO TELEGRAM
 # ==========================================
 
 message = f"""
@@ -138,14 +159,16 @@ EMA20:
 Trend:
 {trend}
 
-Resistenza:
-{resistance:.2f}
+Resistenza più vicina:
+{res_text}
 
-Supporto:
-{support:.2f}
+Supporto più vicino:
+{sup_text}
 """
 
-telegram_url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+telegram_url = (
+    f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+)
 
 response = requests.post(
     telegram_url,
