@@ -1,14 +1,20 @@
 import os
 import requests
 import pandas as pd
-from ta.trend import EMAIndicator
 
+from ta.trend import EMAIndicator
+from ta.momentum import RSIIndicator
+
+# ==========================================
 # TELEGRAM
+# ==========================================
 
 TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-# COIN DA ANALIZZARE
+# ==========================================
+# COINS
+# ==========================================
 
 COINS = {
     "BTC": "XBTUSD",
@@ -19,8 +25,11 @@ COINS = {
 }
 
 watchlist = []
+long_candidates = []
 
+# ==========================================
 # ANALISI
+# ==========================================
 
 for symbol, pair in COINS.items():
 
@@ -38,7 +47,6 @@ for symbol, pair in COINS.items():
         data = response.json()
 
         if "result" not in data:
-            print(f"{symbol}: nessun risultato")
             continue
 
         pair_name = None
@@ -49,7 +57,6 @@ for symbol, pair in COINS.items():
                 break
 
         if pair_name is None:
-            print(f"{symbol}: pair non trovata")
             continue
 
         candles = data["result"][pair_name]
@@ -71,8 +78,9 @@ for symbol, pair in COINS.items():
         df["close"] = pd.to_numeric(df["close"])
 
         if len(df) < 200:
-            print(f"{symbol}: dati insufficienti")
             continue
+
+        # EMA
 
         df["ema20"] = EMAIndicator(
             close=df["close"],
@@ -89,63 +97,101 @@ for symbol, pair in COINS.items():
             window=200
         ).ema_indicator()
 
+        # RSI
+
+        df["rsi"] = RSIIndicator(
+            close=df["close"],
+            window=14
+        ).rsi()
+
         price = float(df.iloc[-1]["close"])
         ema20 = float(df.iloc[-1]["ema20"])
         ema50 = float(df.iloc[-1]["ema50"])
         ema200 = float(df.iloc[-1]["ema200"])
+        rsi = float(df.iloc[-1]["rsi"])
 
-        bull_trend = (
+        # ==================================
+        # LONG CANDIDATE
+        # ==================================
+
+        if (
             price > ema20
             and ema20 > ema50
-            and ema50 > ema200
-        )
+            and rsi > 55
+        ):
 
-        if bull_trend:
+            long_candidates.append(
+                {
+                    "symbol": symbol,
+                    "price": price,
+                    "rsi": rsi
+                }
+            )
+
+        # ==================================
+        # WATCHLIST
+        # ==================================
+
+        elif (
+            price > ema20
+            and rsi > 45
+        ):
 
             watchlist.append(
                 {
                     "symbol": symbol,
                     "price": price,
-                    "ema20": ema20,
-                    "ema50": ema50,
-                    "ema200": ema200
+                    "rsi": rsi
                 }
             )
 
         print(
             f"{symbol} | "
-            f"Price={price:.2f} "
+            f"P={price:.2f} "
             f"EMA20={ema20:.2f} "
             f"EMA50={ema50:.2f} "
-            f"EMA200={ema200:.2f}"
+            f"EMA200={ema200:.2f} "
+            f"RSI={rsi:.2f}"
         )
 
     except Exception as e:
 
         print(f"Errore {symbol}: {e}")
 
-# TELEGRAM
+# ==========================================
+# MESSAGGIO TELEGRAM
+# ==========================================
+
+message = ""
+
+if long_candidates:
+
+    message += "🟢 LONG CANDIDATES\n\n"
+
+    for coin in long_candidates:
+
+        message += (
+            f"{coin['symbol']}\n"
+            f"Prezzo: {coin['price']:.2f}\n"
+            f"RSI: {coin['rsi']:.1f}\n\n"
+        )
 
 if watchlist:
 
-    message = "🟡 WATCHLIST 4H\n\n"
+    message += "\n🟡 WATCHLIST\n\n"
 
     for coin in watchlist:
 
         message += (
             f"{coin['symbol']}\n"
             f"Prezzo: {coin['price']:.2f}\n"
-            f"EMA20: {coin['ema20']:.2f}\n"
-            f"EMA50: {coin['ema50']:.2f}\n"
-            f"EMA200: {coin['ema200']:.2f}\n\n"
+            f"RSI: {coin['rsi']:.1f}\n\n"
         )
 
-    telegram_url = (
-        f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    )
+if message:
 
     response = requests.post(
-        telegram_url,
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
         json={
             "chat_id": CHAT_ID,
             "text": message
@@ -157,4 +203,4 @@ if watchlist:
 
 else:
 
-    print("Nessuna coin in trend rialzista")
+    print("Nessuna opportunità trovata")
