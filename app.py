@@ -11,7 +11,7 @@ TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
 # ==========================================
-# KRAKEN OHLC 4H
+# DATI KRAKEN 4H
 # ==========================================
 
 url = "https://api.kraken.com/0/public/OHLC"
@@ -49,11 +49,8 @@ df = pd.DataFrame(
     ]
 )
 
-df["open"] = df["open"].astype(float)
-df["high"] = df["high"].astype(float)
-df["low"] = df["low"].astype(float)
-df["close"] = df["close"].astype(float)
-df["volume"] = df["volume"].astype(float)
+for col in ["open", "high", "low", "close", "volume"]:
+    df[col] = df[col].astype(float)
 
 # ==========================================
 # EMA20
@@ -136,7 +133,7 @@ resistance_zone = []
 
 if resistance is not None:
 
-    tolerance = resistance * 0.01
+    tolerance = resistance * 0.005
 
     resistance_zone = [
         x for x in swing_highs
@@ -151,7 +148,7 @@ support_zone = []
 
 if support is not None:
 
-    tolerance = support * 0.01
+    tolerance = support * 0.005
 
     support_zone = [
         x for x in swing_lows
@@ -177,7 +174,21 @@ else:
     support_high = support
 
 # ==========================================
-# TESTO TELEGRAM
+# STATO OPERATIVO
+# ==========================================
+
+if price < ema20:
+
+    signal = "🔴 NO LONG"
+    reason = "Prezzo sotto EMA20"
+
+else:
+
+    signal = "🟡 ATTENDI"
+    reason = "Trend rialzista ma nessun setup"
+
+# ==========================================
+# TELEGRAM MESSAGE
 # ==========================================
 
 message = f"""
@@ -197,11 +208,15 @@ Zona Resistenza:
 
 Zona Supporto:
 {support_low:.2f} - {support_high:.2f}
+
+STATO:
+{signal}
+
+Motivo:
+{reason}
 """
 
-telegram_url = (
-    f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-)
+telegram_url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 
 response = requests.post(
     telegram_url,
