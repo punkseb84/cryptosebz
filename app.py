@@ -24,7 +24,6 @@ params = {
 response = requests.get(url, params=params)
 data = response.json()
 
-# Trova il nome della coppia restituita da Kraken
 pair_name = [
     key for key in data["result"].keys()
     if key != "last"
@@ -49,8 +48,6 @@ df = pd.DataFrame(
         "count"
     ]
 )
-
-# Conversione numerica
 
 df["open"] = df["open"].astype(float)
 df["high"] = df["high"].astype(float)
@@ -121,30 +118,66 @@ supports_below = [
 
 resistance = (
     min(resistances_above)
-    if len(resistances_above) > 0
+    if resistances_above
     else None
 )
 
 support = (
     max(supports_below)
-    if len(supports_below) > 0
+    if supports_below
     else None
 )
 
-res_text = (
-    f"{resistance:.2f}"
-    if resistance is not None
-    else "N/D"
-)
+# ==========================================
+# ZONA RESISTENZA
+# ==========================================
 
-sup_text = (
-    f"{support:.2f}"
-    if support is not None
-    else "N/D"
-)
+resistance_zone = []
+
+if resistance is not None:
+
+    tolerance = resistance * 0.01
+
+    resistance_zone = [
+        x for x in swing_highs
+        if abs(x - resistance) <= tolerance
+    ]
 
 # ==========================================
-# MESSAGGIO TELEGRAM
+# ZONA SUPPORTO
+# ==========================================
+
+support_zone = []
+
+if support is not None:
+
+    tolerance = support * 0.01
+
+    support_zone = [
+        x for x in swing_lows
+        if abs(x - support) <= tolerance
+    ]
+
+# ==========================================
+# LIMITI ZONE
+# ==========================================
+
+if resistance_zone:
+    resistance_low = min(resistance_zone)
+    resistance_high = max(resistance_zone)
+else:
+    resistance_low = resistance
+    resistance_high = resistance
+
+if support_zone:
+    support_low = min(support_zone)
+    support_high = max(support_zone)
+else:
+    support_low = support
+    support_high = support
+
+# ==========================================
+# TESTO TELEGRAM
 # ==========================================
 
 message = f"""
@@ -159,11 +192,11 @@ EMA20:
 Trend:
 {trend}
 
-Resistenza più vicina:
-{res_text}
+Zona Resistenza:
+{resistance_low:.2f} - {resistance_high:.2f}
 
-Supporto più vicino:
-{sup_text}
+Zona Supporto:
+{support_low:.2f} - {support_high:.2f}
 """
 
 telegram_url = (
