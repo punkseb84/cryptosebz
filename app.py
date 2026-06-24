@@ -3,7 +3,6 @@ import requests
 import pandas as pd
 
 from ta.trend import EMAIndicator
-from ta.momentum import RSIIndicator
 
 # ==========================================
 # TELEGRAM
@@ -24,11 +23,10 @@ COINS = {
     "AVAX": "AVAXUSD"
 }
 
-watchlist = []
-long_candidates = []
+signals = []
 
 # ==========================================
-# ANALISI
+# SCANNER
 # ==========================================
 
 for symbol, pair in COINS.items():
@@ -51,7 +49,7 @@ for symbol, pair in COINS.items():
 
         pair_name = None
 
-        for key in data["result"].keys():
+        for key in data["result"]:
             if key != "last":
                 pair_name = key
                 break
@@ -75,12 +73,15 @@ for symbol, pair in COINS.items():
             ]
         )
 
-        df["close"] = pd.to_numeric(df["close"])
+        for col in ["open", "high", "low", "close"]:
+            df[col] = pd.to_numeric(df[col])
 
-        if len(df) < 200:
+        if len(df) < 220:
             continue
 
+        # ==================================
         # EMA
+        # ==================================
 
         df["ema20"] = EMAIndicator(
             close=df["close"],
@@ -97,61 +98,83 @@ for symbol, pair in COINS.items():
             window=200
         ).ema_indicator()
 
-        # RSI
+        # ==================================
+        # PREZZI
+        # ==================================
 
-        df["rsi"] = RSIIndicator(
-            close=df["close"],
-            window=14
-        ).rsi()
+        close = float(df.iloc[-1]["close"])
+        prev_close = float(df.iloc[-2]["close"])
 
-        price = float(df.iloc[-1]["close"])
+        low = float(df.iloc[-1]["low"])
+
         ema20 = float(df.iloc[-1]["ema20"])
         ema50 = float(df.iloc[-1]["ema50"])
         ema200 = float(df.iloc[-1]["ema200"])
-        rsi = float(df.iloc[-1]["rsi"])
 
         # ==================================
-        # LONG CANDIDATE
+        # TREND
         # ==================================
 
-        if (
-            price > ema20
+        bull_trend = (
+            close > ema20
             and ema20 > ema50
-            and rsi > 55
-        ):
-
-            long_candidates.append(
-                {
-                    "symbol": symbol,
-                    "price": price,
-                    "rsi": rsi
-                }
-            )
+            and ema50 > ema200
+        )
 
         # ==================================
-        # WATCHLIST
+        # RESISTENZA
+        # ultime 30 candele
+        # esclusa quella attuale
         # ==================================
 
-        elif (
-            price > ema20
-            and rsi > 45
-        ):
+        resistance = (
+            df["high"]
+            .iloc[-31:-1]
+            .max()
+        )
 
-            watchlist.append(
+        # ==================================
+        # BREAKOUT
+        # ==================================
+
+        breakout = (
+            prev_close <= resistance
+            and close > resistance
+        )
+
+        # ==================================
+        # LONG SETUP
+        # ==================================
+
+        if bull_trend and breakout:
+
+            entry = close
+
+            stop = low
+
+            risk = entry - stop
+
+            if risk <= 0:
+                continue
+
+            tp1 = entry + (risk * 2)
+            tp2 = entry + (risk * 3)
+
+            signals.append(
                 {
                     "symbol": symbol,
-                    "price": price,
-                    "rsi": rsi
+                    "entry": entry,
+                    "stop": stop,
+                    "tp1": tp1,
+                    "tp2": tp2,
+                    "resistance": resistance
                 }
             )
 
         print(
             f"{symbol} | "
-            f"P={price:.2f} "
-            f"EMA20={ema20:.2f} "
-            f"EMA50={ema50:.2f} "
-            f"EMA200={ema200:.2f} "
-            f"RSI={rsi:.2f}"
+            f"Close={close:.2f} "
+            f"Res={resistance:.2f}"
         )
 
     except Exception as e:
@@ -159,36 +182,23 @@ for symbol, pair in COINS.items():
         print(f"Errore {symbol}: {e}")
 
 # ==========================================
-# MESSAGGIO TELEGRAM
+# TELEGRAM
 # ==========================================
 
-message = ""
+if signals:
 
-if long_candidates:
+    message = "🟢 LONG SETUP TROVATO\n\n"
 
-    message += "🟢 LONG CANDIDATES\n\n"
-
-    for coin in long_candidates:
+    for s in signals:
 
         message += (
-            f"{coin['symbol']}\n"
-            f"Prezzo: {coin['price']:.2f}\n"
-            f"RSI: {coin['rsi']:.1f}\n\n"
+            f"{s['symbol']}\n\n"
+            f"Entry: {s['entry']:.2f}\n"
+            f"Stop: {s['stop']:.2f}\n"
+            f"TP1: {s['tp1']:.2f}\n"
+            f"TP2: {s['tp2']:.2f}\n"
+            f"Resistenza: {s['resistance']:.2f}\n\n"
         )
-
-if watchlist:
-
-    message += "\n🟡 WATCHLIST\n\n"
-
-    for coin in watchlist:
-
-        message += (
-            f"{coin['symbol']}\n"
-            f"Prezzo: {coin['price']:.2f}\n"
-            f"RSI: {coin['rsi']:.1f}\n\n"
-        )
-
-if message:
 
     response = requests.post(
         f"https://api.telegram.org/bot{TOKEN}/sendMessage",
@@ -203,4 +213,4 @@ if message:
 
 else:
 
-    print("Nessuna opportunità trovata")
+    print("Nessun LONG setup trovato")
