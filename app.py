@@ -210,16 +210,16 @@ for symbol, pair in COINS.items():
 
         if pre_long:
 
-    message += "🟠 PRE-LONG\n\n"
+            message += "🟠 PRE-LONG\n\n"
 
-    for p in pre_long:
+            for p in pre_long:
 
-        message += (
-            f"{p['symbol']}\n"
-            f"Score: {p['score']:.1f}\n"
-            f"Trend Score: {p['trend_score']}/3\n"
-            f"Distanza: {p['distance']:.2f}%\n"
-            f"RVOL: {p['rvol']:.2f}\n\n"
+                message += (
+                f"{p['symbol']}\n"
+                f"Score: {p['score']:.1f}\n"
+                f"Trend Score: {p['trend_score']}/3\n"
+                f"Distanza: {p['distance']:.2f}%\n"
+                f"RVOL: {p['rvol']:.2f}\n\n"
         )
 
         # ==================================
