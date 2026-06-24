@@ -100,6 +100,7 @@ for symbol, pair in COINS.items():
         ).ema_indicator()
 
         close = float(df.iloc[-1]["close"])
+        open_price = float(df.iloc[-1]["open"])
         prev_close = float(df.iloc[-2]["close"])
         low = float(df.iloc[-1]["low"])
 
@@ -139,8 +140,15 @@ for symbol, pair in COINS.items():
         if not resistances_above:
             continue
 
-        resistance = min(resistances_above)
+valid_resistances = [
+    x for x in resistances_above
+    if ((x - close) / close) * 100 >= 1
+]
 
+if not valid_resistances:
+    continue
+
+resistance = min(valid_resistances)
         distance = (
             (resistance - close)
             / close
@@ -167,9 +175,10 @@ for symbol, pair in COINS.items():
         # ==================================
 
         breakout = (
-            prev_close <= resistance
-            and close > resistance
-        )
+    prev_close <= resistance
+    and close > resistance
+    and close > open_price
+)
 
         # ==================================
         # LONG SETUP
