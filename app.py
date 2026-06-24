@@ -300,17 +300,28 @@ for symbol, pair in COINS.items():
 
         print(f"Errore {symbol}: {e}")
 
+        pre_long = sorted(
+            pre_long,
+            key=lambda x: x["score"],
+            reverse=True
+        )[:5]
+
+        pre_symbols = {
+            p["symbol"]
+            for p in pre_long
+        }
+
+        watchlist = [
+            w for w in watchlist
+            if w["symbol"] not in pre_symbols
+        ]
+
         watchlist = sorted(
             watchlist,
             key=lambda x: x["score"],
             reverse=True
         )[:5]
 
-        pre_long = sorted(
-            pre_long,
-            key=lambda x: x["score"],
-            reverse=True
-        )[:5]
 
 # ==========================================
 # TELEGRAM
