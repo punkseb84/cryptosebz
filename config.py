@@ -103,11 +103,11 @@ BREAKOUT_BUFFER = 0.005
 # SCORE
 # ==========================================================
 
-TREND_WEIGHT = 50
+TREND_WEIGHT = 60
 
-RVOL_WEIGHT = 25
+RVOL_WEIGHT = 15
 
-DISTANCE_WEIGHT = 8
+DISTANCE_WEIGHT = 10
 
 
 # ==========================================================
