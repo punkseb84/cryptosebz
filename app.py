@@ -101,7 +101,6 @@ for symbol, pair in COINS.items():
 
         close = float(df.iloc[-1]["close"])
         prev_close = float(df.iloc[-2]["close"])
-
         low = float(df.iloc[-1]["low"])
 
         ema20 = float(df.iloc[-1]["ema20"])
@@ -151,28 +150,17 @@ for symbol, pair in COINS.items():
         # WATCHLIST
         # ==================================
 
-       if watchlist:
+        if distance <= 3:
 
-```
-message += "🟡 WATCHLIST\n\n"
-
-for w in watchlist:
-
-    trend_text = (
-        "RIALZISTA"
-        if w["bull_trend"]
-        else "NON RIALZISTA"
-    )
-
-    message += (
-        f"{w['symbol']}\n"
-        f"Prezzo: {w['close']:.2f}\n"
-        f"Resistenza: {w['resistance']:.2f}\n"
-        f"Distanza: {w['distance']:.2f}%\n"
-        f"Trend: {trend_text}\n\n"
-    )
-```
-
+            watchlist.append(
+                {
+                    "symbol": symbol,
+                    "close": close,
+                    "resistance": resistance,
+                    "distance": distance,
+                    "bull_trend": bull_trend
+                }
+            )
 
         # ==================================
         # BREAKOUT
@@ -190,7 +178,6 @@ for w in watchlist:
         if bull_trend and breakout:
 
             entry = close
-
             stop = low
 
             risk = entry - stop
@@ -249,11 +236,18 @@ if watchlist:
 
     for w in watchlist:
 
+        trend_text = (
+            "RIALZISTA"
+            if w["bull_trend"]
+            else "NON RIALZISTA"
+        )
+
         message += (
             f"{w['symbol']}\n"
             f"Prezzo: {w['close']:.2f}\n"
             f"Resistenza: {w['resistance']:.2f}\n"
-            f"Distanza: {w['distance']:.2f}%\n\n"
+            f"Distanza: {w['distance']:.2f}%\n"
+            f"Trend: {trend_text}\n\n"
         )
 
 if message:
