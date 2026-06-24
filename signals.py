@@ -34,13 +34,13 @@ def build_long_signal(
 
     if support is not None:
 
-    stop = support
+        stop = support
 
     else:
 
-    stop = candle_low
+        stop = candle_low
 
-    risk = calculate_risk(
+        risk = calculate_risk(
         entry,
         stop
     )
