@@ -1,12 +1,13 @@
 # ==========================================================
 # RANKING
-# V6
+# V6.1
 # ==========================================================
 
 from config import (
     TREND_WEIGHT,
     RVOL_WEIGHT,
-    DISTANCE_WEIGHT
+    DISTANCE_WEIGHT,
+    RVOL_CAP
 )
 
 
@@ -15,14 +16,13 @@ from config import (
 # ==========================================================
 
 def calculate_score(
-
     trend_score,
     rvol,
     distance
-
 ):
 
-    rvol = min(rvol, 5)
+    # Limita il peso del volume
+    rvol = min(rvol, RVOL_CAP)
 
     score = (
 
@@ -42,53 +42,18 @@ def calculate_score(
 
 
 # ==========================================================
-# ORDINA LISTA
-# ==========================================================
-
-def sort_by_score(items):
-
-    return sorted(
-
-        items,
-
-        key=lambda x: x["score"],
-
-        reverse=True
-
-    )
-
-
-# ==========================================================
-# TOP N
-# ==========================================================
-
-def top(items, limit):
-
-    return sort_by_score(items)[:limit]
-
-
-# ==========================================================
 # CREA RECORD
 # ==========================================================
 
 def build_record(
-
     symbol,
-
     close,
-
     resistance,
-
     support,
-
     distance,
-
     trend_score,
-
     rvol,
-
     score
-
 ):
 
     return {
@@ -117,13 +82,9 @@ def build_record(
 # ==========================================================
 
 def add_watchlist(
-
     watchlist,
-
     record,
-
     max_distance
-
 ):
 
     if record["distance"] <= max_distance:
@@ -134,87 +95,118 @@ def add_watchlist(
 
 
 # ==========================================================
-# PRE LONG
+# PRE-LONG
 # ==========================================================
 
 def add_prelong(
-
-    prelong,
-
+    pre_long,
     record,
-
     max_distance,
-
     min_rvol
-
 ):
+
+    trend = record["trend_score"]
+
+    distance = record["distance"]
+
+    rvol = record["rvol"]
 
     if (
 
-        record["trend_score"] >= 2
+        (
+            trend == 3
+
+            or
+
+            (
+                trend == 2
+                and rvol >= 2
+                and distance <= max_distance
+            )
+
+        )
 
         and
 
-        record["distance"] <= max_distance
-
-        and
-
-        record["rvol"] >= min_rvol
+        rvol >= min_rvol
 
     ):
 
-        prelong.append(record)
+        pre_long.append(record)
 
-    return prelong
+    return pre_long
 
 
 # ==========================================================
-# ELIMINA DUPLICATI
+# RIMUOVE I DUPLICATI
 # ==========================================================
 
 def remove_duplicates(
-
     watchlist,
-
-    prelong
-
+    pre_long
 ):
 
     pre_symbols = {
 
-        item["symbol"]
+        p["symbol"]
 
-        for item in prelong
+        for p in pre_long
 
     }
 
     return [
 
-        item
+        w
 
-        for item in watchlist
+        for w in watchlist
 
-        if item["symbol"] not in pre_symbols
+        if w["symbol"] not in pre_symbols
 
     ]
+
+
+# ==========================================================
+# ORDINA PER SCORE
+# ==========================================================
+
+def sort_by_score(items):
+
+    return sorted(
+
+        items,
+
+        key=lambda x: x["score"],
+
+        reverse=True
+
+    )
+
+
+# ==========================================================
+# TOP N
+# ==========================================================
+
+def top(items, limit):
+
+    return sort_by_score(items)[:limit]
 
 
 # ==========================================================
 # DEBUG
 # ==========================================================
 
-def print_score(
-
-    symbol,
-
-    score
-
-):
+def print_score(record):
 
     print(
 
-        f"{symbol}"
+        f"{record['symbol']}"
 
-        f" | SCORE={score:.2f}"
+        f" | Score={record['score']:.1f}"
+
+        f" | Trend={record['trend_score']}/3"
+
+        f" | RVOL={record['rvol']:.2f}"
+
+        f" | Dist={record['distance']:.2f}%"
 
     )
