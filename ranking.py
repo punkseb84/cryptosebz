@@ -22,6 +22,8 @@ def calculate_score(
 
 ):
 
+    rvol = min(rvol, 5)
+
     score = (
 
         trend_score * TREND_WEIGHT
