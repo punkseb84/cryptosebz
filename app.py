@@ -123,14 +123,17 @@ for symbol, pair in COINS.items():
             window=200
         ).ema_indicator()
 
-        close = float(df.iloc[-1]["close"])
-        open_price = float(df.iloc[-1]["open"])
-        prev_close = float(df.iloc[-2]["close"])
-        low = float(df.iloc[-1]["low"])
+        # Ultima candela 4H CHIUSA
+        close = float(df.iloc[-2]["close"])
+        open_price = float(df.iloc[-2]["open"])
+        low = float(df.iloc[-2]["low"])
 
-        ema20 = float(df.iloc[-1]["ema20"])
-        ema50 = float(df.iloc[-1]["ema50"])
-        ema200 = float(df.iloc[-1]["ema200"])
+        # Candela chiusa precedente
+        prev_close = float(df.iloc[-3]["close"])
+
+        ema20 = float(df.iloc[-2]["ema20"])
+        ema50 = float(df.iloc[-2]["ema50"])
+        ema200 = float(df.iloc[-2]["ema200"])
 
         bull_trend = (
             close > ema20
@@ -142,8 +145,13 @@ for symbol, pair in COINS.items():
         # VOLUME
         # ==================================
 
-        current_volume = float(df.iloc[-1]["volume"])
-        avg_volume = float(df["volume"].tail(20).mean())
+        # Volume dell'ultima candela CHIUSA
+        current_volume = float(df.iloc[-2]["volume"])
+
+        # Media delle 20 candele chiuse precedenti
+        avg_volume = float(
+            df["volume"].iloc[-22:-2].mean()
+        )
 
         if avg_volume > 0:
             rvol = current_volume / avg_volume
@@ -253,6 +261,7 @@ for symbol, pair in COINS.items():
             f"Res={resistance:.2f} "
             f"Dist={distance:.2f}% "
             f"RVOL={rvol:.2f}"
+            f"(4H CLOSED)"
         )
 
     except Exception as e:
