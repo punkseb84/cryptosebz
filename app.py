@@ -74,7 +74,7 @@ for symbol, pair in COINS.items():
             ]
         )
 
-        for col in ["open", "high", "low", "close"]:
+        for col in ["open", "high", "low", "close", "volume"]:
             df[col] = pd.to_numeric(df[col])
 
         if len(df) < 220:
@@ -113,6 +113,18 @@ for symbol, pair in COINS.items():
             and ema20 > ema50
             and ema50 > ema200
         )
+
+        # ==================================
+        # VOLUME
+        # ==================================
+
+        current_volume = float(df.iloc[-1]["volume"])
+        avg_volume = float(df["volume"].tail(20).mean())
+
+        if avg_volume > 0:
+            rvol = current_volume / avg_volume
+        else:
+            rvol = 0
 
         # ==================================
         # SWING HIGHS
@@ -167,7 +179,8 @@ for symbol, pair in COINS.items():
                     "close": close,
                     "resistance": resistance,
                     "distance": distance,
-                    "bull_trend": bull_trend
+                    "bull_trend": bull_trend,
+                    "rvol": rvol
                 }
             )
 
@@ -185,7 +198,7 @@ for symbol, pair in COINS.items():
         # LONG SETUP
         # ==================================
 
-        if bull_trend and breakout:
+        if bull_trend and breakout and rvol > 1.2:
 
             entry = close
             stop = low
@@ -205,7 +218,8 @@ for symbol, pair in COINS.items():
                     "stop": stop,
                     "tp1": tp1,
                     "tp2": tp2,
-                    "resistance": resistance
+                    "resistance": resistance,
+                    "rvol": rvol
                 }
             )
 
@@ -213,7 +227,8 @@ for symbol, pair in COINS.items():
             f"{symbol} | "
             f"Close={close:.2f} "
             f"Res={resistance:.2f} "
-            f"Dist={distance:.2f}%"
+            f"Dist={distance:.2f}% "
+            f"RVOL={rvol:.2f}"
         )
 
     except Exception as e:
@@ -237,7 +252,8 @@ if signals:
             f"Entry: {s['entry']:.2f}\n"
             f"Stop: {s['stop']:.2f}\n"
             f"TP1: {s['tp1']:.2f}\n"
-            f"TP2: {s['tp2']:.2f}\n\n"
+            f"TP2: {s['tp2']:.2f}\n"
+            f"RVOL: {s['rvol']:.2f}\n\n"
         )
 
 if watchlist:
@@ -257,7 +273,8 @@ if watchlist:
             f"Prezzo: {w['close']:.2f}\n"
             f"Resistenza: {w['resistance']:.2f}\n"
             f"Distanza: {w['distance']:.2f}%\n"
-            f"Trend: {trend_text}\n\n"
+            f"Trend: {trend_text}\n"
+            f"RVOL: {w['rvol']:.2f}\n\n"
         )
 
 if message:
