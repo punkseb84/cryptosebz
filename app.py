@@ -137,23 +137,23 @@ for symbol, pair in COINS.items():
             if x > close
         ]
 
-       if not resistances_above:
-    continue
+        if not resistances_above:
+            continue
 
-valid_resistances = [
-    x for x in resistances_above
-    if ((x - close) / close) * 100 >= 1
-]
+        valid_resistances = [
+            x for x in resistances_above
+            if ((x - close) / close) * 100 >= 1
+        ]
 
-if not valid_resistances:
-    continue
+        if not valid_resistances:
+            continue
 
-resistance = min(valid_resistances)
+        resistance = min(valid_resistances)
 
-distance = (
-    (resistance - close)
-    / close
-) * 100
+        distance = (
+            (resistance - close)
+            / close
+        ) * 100
 
         # ==================================
         # WATCHLIST
@@ -176,10 +176,10 @@ distance = (
         # ==================================
 
         breakout = (
-    prev_close <= resistance
-    and close > resistance
-    and close > open_price
-)
+            prev_close <= resistance
+            and close > resistance
+            and close > open_price
+        )
 
         # ==================================
         # LONG SETUP
