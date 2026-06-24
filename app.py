@@ -1,13 +1,7 @@
 import requests
 
-url = "https://api.binance.com/api/v3/ticker/price"
+url = "https://api.exchange.coinbase.com/products/BTC-USD/ticker"
 
-response = requests.get(
-    url,
-    params={"symbol": "BTCUSDT"}
-)
+response = requests.get(url)
 
-data = response.json()
-
-print("BTC PRICE")
-print(data)
+print(response.json())
