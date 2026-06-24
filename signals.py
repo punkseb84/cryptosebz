@@ -32,10 +32,13 @@ def build_long_signal(
 
 ):
 
-    stop = swing_stop(
-        support,
-        candle_low
-    )
+    if support is not None:
+
+    stop = support
+
+    else:
+
+    stop = candle_low
 
     risk = calculate_risk(
         entry,
@@ -58,7 +61,9 @@ def build_long_signal(
         3
     )
 
-    rr = 2.0
+    reward = tp1 - entry
+
+    rr = reward / risk
 
     return {
 
