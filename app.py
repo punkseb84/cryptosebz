@@ -23,6 +23,7 @@ COINS = {
     "AVAX": "AVAXUSD"
 }
 
+watchlist = []
 signals = []
 
 # ==========================================
@@ -98,10 +99,6 @@ for symbol, pair in COINS.items():
             window=200
         ).ema_indicator()
 
-        # ==================================
-        # PREZZI
-        # ==================================
-
         close = float(df.iloc[-1]["close"])
         prev_close = float(df.iloc[-2]["close"])
 
@@ -111,10 +108,6 @@ for symbol, pair in COINS.items():
         ema50 = float(df.iloc[-1]["ema50"])
         ema200 = float(df.iloc[-1]["ema200"])
 
-        # ==================================
-        # TREND
-        # ==================================
-
         bull_trend = (
             close > ema20
             and ema20 > ema50
@@ -122,16 +115,52 @@ for symbol, pair in COINS.items():
         )
 
         # ==================================
-        # RESISTENZA
-        # ultime 30 candele
-        # esclusa quella attuale
+        # SWING HIGHS
         # ==================================
 
-        resistance = (
-            df["high"]
-            .iloc[-31:-1]
-            .max()
-        )
+        swing_highs = []
+
+        for i in range(2, len(df) - 2):
+
+            current_high = float(df.iloc[i]["high"])
+
+            if (
+                current_high > float(df.iloc[i - 1]["high"])
+                and current_high > float(df.iloc[i - 2]["high"])
+                and current_high > float(df.iloc[i + 1]["high"])
+                and current_high > float(df.iloc[i + 2]["high"])
+            ):
+                swing_highs.append(current_high)
+
+        resistances_above = [
+            x for x in swing_highs
+            if x > close
+        ]
+
+        if not resistances_above:
+            continue
+
+        resistance = min(resistances_above)
+
+        distance = (
+            (resistance - close)
+            / close
+        ) * 100
+
+        # ==================================
+        # WATCHLIST
+        # ==================================
+
+        if bull_trend and distance <= 3:
+
+            watchlist.append(
+                {
+                    "symbol": symbol,
+                    "close": close,
+                    "resistance": resistance,
+                    "distance": distance
+                }
+            )
 
         # ==================================
         # BREAKOUT
@@ -174,7 +203,8 @@ for symbol, pair in COINS.items():
         print(
             f"{symbol} | "
             f"Close={close:.2f} "
-            f"Res={resistance:.2f}"
+            f"Res={resistance:.2f} "
+            f"Dist={distance:.2f}%"
         )
 
     except Exception as e:
@@ -185,20 +215,36 @@ for symbol, pair in COINS.items():
 # TELEGRAM
 # ==========================================
 
+message = ""
+
 if signals:
 
-    message = "🟢 LONG SETUP TROVATO\n\n"
+    message += "🟢 LONG SETUP\n\n"
 
     for s in signals:
 
         message += (
-            f"{s['symbol']}\n\n"
+            f"{s['symbol']}\n"
             f"Entry: {s['entry']:.2f}\n"
             f"Stop: {s['stop']:.2f}\n"
             f"TP1: {s['tp1']:.2f}\n"
-            f"TP2: {s['tp2']:.2f}\n"
-            f"Resistenza: {s['resistance']:.2f}\n\n"
+            f"TP2: {s['tp2']:.2f}\n\n"
         )
+
+if watchlist:
+
+    message += "🟡 WATCHLIST\n\n"
+
+    for w in watchlist:
+
+        message += (
+            f"{w['symbol']}\n"
+            f"Prezzo: {w['close']:.2f}\n"
+            f"Resistenza: {w['resistance']:.2f}\n"
+            f"Distanza: {w['distance']:.2f}%\n\n"
+        )
+
+if message:
 
     response = requests.post(
         f"https://api.telegram.org/bot{TOKEN}/sendMessage",
@@ -213,4 +259,4 @@ if signals:
 
 else:
 
-    print("Nessun LONG setup trovato")
+    print("Nessun setup trovato")
