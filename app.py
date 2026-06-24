@@ -248,18 +248,18 @@ for symbol, pair in COINS.items():
 )
 
         if (
-        trend_score >= 2
-        and rvol > 1.2
-        and distance <= 2
+            trend_score >= 2
+            and rvol > 1.2
+            and distance <= 2
 ):
-    pre_long.append(
+                pre_long.append(
         {
-            "symbol": symbol,
-            "close": close,
-            "distance": distance,
-            "trend_score": trend_score,
-            "rvol": rvol,
-            "score": score
+                "symbol": symbol,
+                "close": close,
+                "distance": distance,
+                "trend_score": trend_score,
+                "rvol": rvol,
+                "score": score
         }
     )
 
