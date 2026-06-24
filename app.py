@@ -204,8 +204,8 @@ for symbol, pair in COINS.items():
         ) * 100
 
         score = (
-            trend_score * 50
-            + rvol * 20
+            trend_score * 100
+            + rvol * 10
             - distance * 5
         )
 
