@@ -4,16 +4,19 @@ import requests
 TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-message = """
-🚀 Crypto Scanner Online
+ticker = requests.get(
+    "https://api.exchange.coinbase.com/products/BTC-USD/ticker"
+).json()
 
-Primo test riuscito.
+price = ticker["price"]
 
-Se ricevi questo messaggio significa che:
+message = f"""
+📈 BTC/USD
 
-✅ Railway funziona
-✅ Telegram funziona
-✅ Variabili ambiente funzionano
+Prezzo attuale:
+{price}
+
+Scanner online ✅
 """
 
 url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
