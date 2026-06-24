@@ -304,13 +304,13 @@ for symbol, pair in COINS.items():
             watchlist,
             key=lambda x: x["score"],
             reverse=True
-        )
+        )[:5]
 
         pre_long = sorted(
             pre_long,
             key=lambda x: x["score"],
             reverse=True
-        )
+        )[:5]
 
 # ==========================================
 # TELEGRAM
