@@ -11,7 +11,7 @@ TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
 # ==========================================
-# DATI KRAKEN 4H
+# KRAKEN OHLC 4H
 # ==========================================
 
 url = "https://api.kraken.com/0/public/OHLC"
@@ -53,7 +53,7 @@ for col in ["open", "high", "low", "close", "volume"]:
     df[col] = df[col].astype(float)
 
 # ==========================================
-# EMA20
+# EMA
 # ==========================================
 
 df["ema20"] = EMAIndicator(
@@ -61,17 +61,48 @@ df["ema20"] = EMAIndicator(
     window=20
 ).ema_indicator()
 
+df["ema50"] = EMAIndicator(
+    close=df["close"],
+    window=50
+).ema_indicator()
+
+df["ema200"] = EMAIndicator(
+    close=df["close"],
+    window=200
+).ema_indicator()
+
 price = df.iloc[-1]["close"]
 ema20 = df.iloc[-1]["ema20"]
-
-trend = (
-    "RIALZISTA"
-    if price > ema20
-    else "RIBASSISTA"
-)
+ema50 = df.iloc[-1]["ema50"]
+ema200 = df.iloc[-1]["ema200"]
 
 # ==========================================
-# SWING HIGH / SWING LOW
+# TREND
+# ==========================================
+
+bull_trend = (
+    price > ema20
+    and ema20 > ema50
+    and ema50 > ema200
+)
+
+bear_trend = (
+    price < ema20
+    and ema20 < ema50
+    and ema50 < ema200
+)
+
+if bull_trend:
+    trend = "RIALZISTA"
+
+elif bear_trend:
+    trend = "RIBASSISTA"
+
+else:
+    trend = "LATERALE"
+
+# ==========================================
+# SWING HIGH / LOW
 # ==========================================
 
 swing_highs = []
@@ -100,17 +131,17 @@ for i in range(2, len(df) - 2):
         swing_lows.append(current_low)
 
 # ==========================================
-# SUPPORTO E RESISTENZA PIÙ VICINI
+# SUPPORTO E RESISTENZA PIU VICINI
 # ==========================================
 
 resistances_above = [
-    level for level in swing_highs
-    if level > price
+    x for x in swing_highs
+    if x > price
 ]
 
 supports_below = [
-    level for level in swing_lows
-    if level < price
+    x for x in swing_lows
+    if x < price
 ]
 
 resistance = (
@@ -126,10 +157,11 @@ support = (
 )
 
 # ==========================================
-# ZONA RESISTENZA
+# ZONE
 # ==========================================
 
 resistance_zone = []
+support_zone = []
 
 if resistance is not None:
 
@@ -140,12 +172,6 @@ if resistance is not None:
         if abs(x - resistance) <= tolerance
     ]
 
-# ==========================================
-# ZONA SUPPORTO
-# ==========================================
-
-support_zone = []
-
 if support is not None:
 
     tolerance = support * 0.005
@@ -154,10 +180,6 @@ if support is not None:
         x for x in swing_lows
         if abs(x - support) <= tolerance
     ]
-
-# ==========================================
-# LIMITI ZONE
-# ==========================================
 
 if resistance_zone:
     resistance_low = min(resistance_zone)
@@ -177,18 +199,23 @@ else:
 # STATO OPERATIVO
 # ==========================================
 
-if price < ema20:
+if bear_trend:
 
     signal = "🔴 NO LONG"
-    reason = "Prezzo sotto EMA20"
+    reason = "Trend ribassista"
+
+elif bull_trend:
+
+    signal = "🟡 WATCHLIST"
+    reason = "Trend rialzista, attesa setup"
 
 else:
 
-    signal = "🟡 ATTENDI"
-    reason = "Trend rialzista ma nessun setup"
+    signal = "⚪ NEUTRALE"
+    reason = "Trend non definito"
 
 # ==========================================
-# TELEGRAM MESSAGE
+# TELEGRAM
 # ==========================================
 
 message = f"""
@@ -199,6 +226,12 @@ Prezzo:
 
 EMA20:
 {ema20:.2f}
+
+EMA50:
+{ema50:.2f}
+
+EMA200:
+{ema200:.2f}
 
 Trend:
 {trend}
