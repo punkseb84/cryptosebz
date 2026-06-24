@@ -1,7 +1,15 @@
 import requests
 
-url = "https://api.exchange.coinbase.com/products/BTC-USD/ticker"
+url = "https://api.exchange.coinbase.com/products/BTC-USD/candles"
 
-response = requests.get(url)
+params = {
+    "granularity": 14400  # 4 ore
+}
 
-print(response.json())
+response = requests.get(url, params=params)
+
+data = response.json()
+
+print(f"Candele ricevute: {len(data)}")
+
+print(data[:3])
