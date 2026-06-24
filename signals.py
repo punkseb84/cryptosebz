@@ -108,7 +108,15 @@ def is_long(
 
     return (
 
-        trend_score >= 2
+        (
+    trend_score == 3
+    or
+    (
+        trend_score == 2
+        and rvol >= 2
+        and distance <= 1.5
+    )
+)
 
         and
 
