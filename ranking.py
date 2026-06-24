@@ -87,9 +87,18 @@ def add_watchlist(
     max_distance
 ):
 
-    if record["distance"] <= max_distance:
+    if (
+
+        record["trend_score"] >= 1
+
+        and
+
+        record["distance"] <= max_distance
+
+    ):
 
         watchlist.append(record)
+
 
     return watchlist
 
@@ -113,18 +122,11 @@ def add_prelong(
 
     if (
 
-        (
-            trend == 3
+        trend >= 2
 
-            or
+        and
 
-            (
-                trend == 2
-                and rvol >= 2
-                and distance <= max_distance
-            )
-
-        )
+        distance <= max_distance
 
         and
 
