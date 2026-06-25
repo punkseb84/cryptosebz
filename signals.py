@@ -4,6 +4,12 @@
 # ==========================================================
 
 from config import (
+    MAX_RESISTANCE_EXTENSION_PERCENT,
+    MAX_SIGNAL_RISK_PERCENT,
+    MIN_BREAKOUT_BODY_PERCENT,
+    MIN_BREAKOUT_CLOSE_ABOVE_RESISTANCE,
+    MIN_LONG_TREND_SCORE,
+    MIN_SIGNAL_RISK_PERCENT,
     TP1_RR,
     TP2_RR
 )
@@ -27,7 +33,7 @@ def is_long(
 
     return (
 
-        trend_score >= 2
+        trend_score >= MIN_LONG_TREND_SCORE
 
         and
 
@@ -99,6 +105,37 @@ def is_watchlist(
 # BUILD LONG SIGNAL
 # ==========================================================
 
+def valid_breakout_quality(
+    entry,
+    open_price,
+    candle_low,
+    resistance
+):
+
+    if resistance is None or entry <= 0:
+
+        return False
+
+    breakout_extension = ((entry - resistance) / resistance) * 100
+
+    if breakout_extension < MIN_BREAKOUT_CLOSE_ABOVE_RESISTANCE * 100:
+
+        return False
+
+    if breakout_extension > MAX_RESISTANCE_EXTENSION_PERCENT:
+
+        return False
+
+    candle_range = entry - candle_low
+    candle_body = entry - open_price
+
+    if candle_range <= 0 or candle_body <= 0:
+
+        return False
+
+    return (candle_body / candle_range) >= MIN_BREAKOUT_BODY_PERCENT
+
+
 def build_long_signal(
     symbol,
     entry,
@@ -106,8 +143,22 @@ def build_long_signal(
     candle_low,
     resistance,
     rvol,
-    trend_score
+    trend_score,
+    open_price=None
 ):
+
+    # ------------------------------------------
+    # QUALITÀ BREAKOUT
+    # ------------------------------------------
+
+    if open_price is not None and not valid_breakout_quality(
+        entry,
+        open_price,
+        candle_low,
+        resistance
+    ):
+
+        return None
 
     # ------------------------------------------
     # STOP LOSS
@@ -131,6 +182,16 @@ def build_long_signal(
     )
 
     if risk <= 0:
+
+        return None
+
+    risk_percent = (risk / entry) * 100
+
+    if (
+        risk_percent < MIN_SIGNAL_RISK_PERCENT
+        or
+        risk_percent > MAX_SIGNAL_RISK_PERCENT
+    ):
 
         return None
 
@@ -167,6 +228,8 @@ def build_long_signal(
         "stop": stop,
 
         "risk": round(risk, 4),
+
+        "risk_percent": round(risk_percent, 2),
 
         "tp1": tp1,
 
