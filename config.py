@@ -131,6 +131,23 @@ TP2_RR = 3.0
 
 
 # ==========================================================
+# FILTRI QUALITÀ SEGNALE
+# ==========================================================
+
+MIN_LONG_TREND_SCORE = 2
+
+MIN_BREAKOUT_CLOSE_ABOVE_RESISTANCE = 0.0025
+
+MIN_BREAKOUT_BODY_PERCENT = 0.25
+
+MAX_SIGNAL_RISK_PERCENT = 6.0
+
+MIN_SIGNAL_RISK_PERCENT = 0.25
+
+MAX_RESISTANCE_EXTENSION_PERCENT = 12.0
+
+
+# ==========================================================
 # DEBUG
 # ==========================================================
 
