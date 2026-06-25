@@ -190,7 +190,8 @@ def run_scanner():
                     candle_low=low,
                     resistance=resistance,
                     rvol=rvol,
-                    trend_score=trend_score
+                    trend_score=trend_score,
+                    open_price=open_price
                 )
 
                 if signal is not None:
