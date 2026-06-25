@@ -1,195 +1,44 @@
 # ==========================================================
 # LOADER
-# V1.0
+# BACKTEST V1
 # ==========================================================
 
-import os
-import requests
 import pandas as pd
 
-from config import (
-    KRAKEN_URL,
-    INTERVAL
-)
-
-# ==========================================================
-# CARTELLA DATI
-# ==========================================================
-
-DATA_DIR = "data"
-
-os.makedirs(DATA_DIR, exist_ok=True)
+from utils import get_ohlc
 
 
 # ==========================================================
-# FILE LOCALE
+# CARICA STORICO
 # ==========================================================
 
-def history_file(symbol):
+def load_history(pair):
 
-    return os.path.join(
+    print(f"Download storico {pair}...")
 
-        DATA_DIR,
+    df = get_ohlc(pair)
 
-        f"{symbol}_4H.csv"
-
-    )
-
-
-# ==========================================================
-# ESISTE?
-# ==========================================================
-
-def history_exists(symbol):
-
-    return os.path.exists(
-
-        history_file(symbol)
-
-    )
-
-
-# ==========================================================
-# CARICA CSV
-# ==========================================================
-
-def load_local(symbol):
-
-    df = pd.read_csv(
-
-        history_file(symbol)
-
-    )
+    print(f"Candele scaricate: {len(df)}")
 
     return df
 
 
 # ==========================================================
-# SALVA CSV
+# INFO
 # ==========================================================
 
-def save_local(symbol, df):
+def print_history(df):
 
-    df.to_csv(
+    print()
 
-        history_file(symbol),
+    print("Prime 5 candele")
 
-        index=False
+    print(df.head())
 
-    )
+    print()
 
+    print("Ultime 5 candele")
 
-# ==========================================================
-# DOWNLOAD KRAKEN
-# ==========================================================
+    print(df.tail())
 
-def download_history(pair):
-
-    response = requests.get(
-
-        KRAKEN_URL,
-
-        params={
-
-            "pair": pair,
-
-            "interval": INTERVAL
-
-        },
-
-        timeout=30
-
-    )
-
-    response.raise_for_status()
-
-    data = response.json()
-
-    if "result" not in data:
-
-        raise Exception("Kraken error")
-
-    pair_name = None
-
-    for key in data["result"]:
-
-        if key != "last":
-
-            pair_name = key
-
-            break
-
-    candles = data["result"][pair_name]
-
-    df = pd.DataFrame(
-
-        candles,
-
-        columns=[
-
-            "time",
-
-            "open",
-
-            "high",
-
-            "low",
-
-            "close",
-
-            "vwap",
-
-            "volume",
-
-            "count"
-
-        ]
-
-    )
-
-    numeric = [
-
-        "open",
-
-        "high",
-
-        "low",
-
-        "close",
-
-        "volume"
-
-    ]
-
-    for col in numeric:
-
-        df[col] = pd.to_numeric(df[col])
-
-    return df
-
-
-# ==========================================================
-# LOAD HISTORY
-# ==========================================================
-
-def load_history(
-
-    symbol,
-
-    pair
-
-):
-
-    if history_exists(symbol):
-
-        print(f"{symbol}: storico locale")
-
-        return load_local(symbol)
-
-    print(f"{symbol}: download Kraken")
-
-    df = download_history(pair)
-
-    save_local(symbol, df)
-
-    return df
+    print()
