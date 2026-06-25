@@ -1,0 +1,62 @@
+name: Backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      symbol:
+        description: "Symbol label"
+        required: true
+        default: "BTC"
+      pair:
+        description: "Kraken pair"
+        required: true
+        default: "XBTUSD"
+      grid_search:
+        description: "Run grid search"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run backtest
+        run: |
+          if [ "${{ github.event.inputs.grid_search }}" = "true" ]; then
+            python -m backtest.run_backtest \
+              --symbol "${{ github.event.inputs.symbol }}" \
+              --pair "${{ github.event.inputs.pair }}" \
+              --output-dir backtest/reports \
+              --grid-search
+          else
+            python -m backtest.run_backtest \
+              --symbol "${{ github.event.inputs.symbol }}" \
+              --pair "${{ github.event.inputs.pair }}" \
+              --output-dir backtest/reports
+          fi
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: backtest-reports
+          path: backtest/reports/
