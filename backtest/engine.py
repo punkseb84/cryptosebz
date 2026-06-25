@@ -105,6 +105,7 @@ def _build_signal(symbol, window, rvol_min, prelong_distance, breakout_buffer):
         resistance=resistance,
         rvol=rvol,
         trend_score=trend_score,
+        open_price=open_price,
     )
 
 
