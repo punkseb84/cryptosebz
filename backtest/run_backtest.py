@@ -5,28 +5,46 @@
 
 from datetime import datetime
 
+from backtest.loader import (
+    load_history,
+    print_history
+)
+
+from config import COINS
+
+
+# ==========================================================
+# MAIN
+# ==========================================================
 
 def main():
 
     print()
 
     print("=" * 60)
-    print("CRYPTO SCANNER BACKTEST")
+    print("CRYPTO SCANNER BACKTEST V1")
     print("=" * 60)
 
     print(
-        "Avvio:",
         datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     )
 
     print()
 
-    print("Backtester inizializzato correttamente.")
+    # BTC
+    pair = COINS["BTC"]
 
-    print()
+    df = load_history(pair)
+
+    print_history(df)
 
     print("=" * 60)
 
 
+# ==========================================================
+# START
+# ==========================================================
+
 if __name__ == "__main__":
+
     main()
