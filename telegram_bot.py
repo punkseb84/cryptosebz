@@ -84,6 +84,8 @@ def build_message(
 
                 f"RR: {s['rr']:.2f}\n"
 
+                f"Rischio: {s.get('risk_percent', 0):.2f}%\n"
+
                 f"RVOL: {s['rvol']:.2f}\n\n"
 
             )
