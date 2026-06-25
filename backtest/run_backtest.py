@@ -9,6 +9,7 @@ from datetime import datetime
 from backtest.loader import (
     load_history,
     print_history
+)
 import argparse
 import os
 
@@ -69,6 +70,7 @@ def main():
 
     print(
         datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    )
     backtest = run_backtest(
         symbol=args.symbol,
         df=df,
