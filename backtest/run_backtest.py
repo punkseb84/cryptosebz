@@ -1,17 +1,15 @@
 # ==========================================================
-# CRYPTO SCANNER
-# BACKTEST V1
 # CRYPTO SCANNER BACKTEST
 # ==========================================================
 
-from datetime import datetime
-
-from backtest.loader import (
-    load_history,
-    print_history
-)
 import argparse
 import os
+
+if not os.environ.get("TELEGRAM_BOT_TOKEN"):
+    os.environ["TELEGRAM_BOT_TOKEN"] = "dummy"
+
+if not os.environ.get("TELEGRAM_CHAT_ID"):
+    os.environ["TELEGRAM_CHAT_ID"] = "dummy"
 
 from backtest.engine import grid_search, run_backtest
 from backtest.loader import load_history
@@ -23,7 +21,6 @@ from backtest.report import (
     print_summary,
 )
 
-from config import COINS
 
 def _float_list(value):
 
@@ -53,24 +50,14 @@ def parse_args():
 
     return parser.parse_args()
 
-# ==========================================================
-# MAIN
-# ==========================================================
 
 def main():
 
-    print()
     args = parse_args()
     os.makedirs(args.output_dir, exist_ok=True)
 
-    print("=" * 60)
-    print("CRYPTO SCANNER BACKTEST V1")
-    print("=" * 60)
     df = load_history(args.pair)
 
-    print(
-        datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    )
     backtest = run_backtest(
         symbol=args.symbol,
         df=df,
@@ -79,14 +66,9 @@ def main():
         breakout_buffer=args.breakout_buffer,
     )
 
-    print()
     trades_path = os.path.join(args.output_dir, "trades.csv")
     equity_path = os.path.join(args.output_dir, "equity_curve.csv")
 
-    # BTC
-    pair = COINS["BTC"]
-
-    df = load_history(pair)
     export_trades_csv(
         backtest["trades"],
         trades_path,
@@ -96,12 +78,10 @@ def main():
         equity_path,
     )
 
-    print_history(df)
     print_summary(backtest["metrics"])
     print(f"Report trade esportato: {trades_path}")
     print(f"Equity curve esportata: {equity_path}")
 
-    print("=" * 60)
     if args.grid_search:
         results = grid_search(
             symbol=args.symbol,
@@ -116,9 +96,6 @@ def main():
         print_best_grid(results)
         print(f"Grid Search esportata: {grid_path}")
 
-# ==========================================================
-# START
-# ==========================================================
 
 if __name__ == "__main__":
 
