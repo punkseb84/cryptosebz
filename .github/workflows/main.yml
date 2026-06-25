@@ -39,6 +39,7 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || 'dummy' }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || 'dummy' }}
+      PYTHONUNBUFFERED: "1"
 
     steps:
       - name: Checkout repository
@@ -52,10 +53,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Validate backtest syntax
+        run: |
+          nl -ba backtest/run_backtest.py | sed -n '1,40p'
+          python -m py_compile backtest/engine.py backtest/metrics.py backtest/report.py backtest/run_backtest.py
+
       - name: Run backtest
         run: |
           if [ "${{ github.event.inputs.grid_search }}" = "true" ]; then
-            python -m backtest.run_backtest \
+            python -u -m backtest.run_backtest \
               --symbol "${{ github.event.inputs.symbol }}" \
               --pair "${{ github.event.inputs.pair }}" \
               --output-dir backtest/reports \
@@ -64,7 +70,7 @@ jobs:
               --prelong-values "${{ github.event.inputs.prelong_values }}" \
               --breakout-values "${{ github.event.inputs.breakout_values }}"
           else
-            python -m backtest.run_backtest \
+            python -u -m backtest.run_backtest \
               --symbol "${{ github.event.inputs.symbol }}" \
               --pair "${{ github.event.inputs.pair }}" \
               --output-dir backtest/reports
