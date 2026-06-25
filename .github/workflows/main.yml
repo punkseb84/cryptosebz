@@ -4,29 +4,41 @@ on:
   workflow_dispatch:
     inputs:
       symbol:
-        description: "Symbol label"
+        description: Symbol label used in reports
         required: true
-        default: "BTC"
+        default: BTC
       pair:
-        description: "Kraken pair"
+        description: Kraken pair to download
         required: true
-        default: "XBTUSD"
+        default: XBTUSD
       grid_search:
-        description: "Run grid search"
+        description: Run parameter grid search
         required: true
         default: "true"
         type: choice
         options:
           - "true"
           - "false"
+      rvol_values:
+        description: Comma-separated RVOL_MIN values for grid search
+        required: false
+        default: "1.0,1.2,1.5,2.0"
+      prelong_values:
+        description: Comma-separated PRELONG_DISTANCE values for grid search
+        required: false
+        default: "0.75,1.0,1.5,2.0,3.0"
+      breakout_values:
+        description: Comma-separated BREAKOUT_BUFFER values for grid search
+        required: false
+        default: "0.0025,0.005,0.0075,0.01"
 
 jobs:
   backtest:
     runs-on: ubuntu-latest
 
     env:
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || 'dummy' }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || 'dummy' }}
 
     steps:
       - name: Checkout repository
@@ -47,7 +59,10 @@ jobs:
               --symbol "${{ github.event.inputs.symbol }}" \
               --pair "${{ github.event.inputs.pair }}" \
               --output-dir backtest/reports \
-              --grid-search
+              --grid-search \
+              --rvol-values "${{ github.event.inputs.rvol_values }}" \
+              --prelong-values "${{ github.event.inputs.prelong_values }}" \
+              --breakout-values "${{ github.event.inputs.breakout_values }}"
           else
             python -m backtest.run_backtest \
               --symbol "${{ github.event.inputs.symbol }}" \
@@ -58,5 +73,5 @@ jobs:
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
-          name: backtest-reports
+          name: backtest-reports-${{ github.event.inputs.symbol }}-${{ github.run_number }}
           path: backtest/reports/
