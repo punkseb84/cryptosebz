@@ -1,335 +1,111 @@
 # ==========================================================
 # SIGNALS
-# V6.1
 # ==========================================================
 
 from config import (
-    MAX_RESISTANCE_EXTENSION_PERCENT,
-    MAX_SIGNAL_RISK_PERCENT,
-    MIN_BREAKOUT_BODY_PERCENT,
-    MIN_BREAKOUT_CLOSE_ABOVE_RESISTANCE,
-    MIN_LONG_TREND_SCORE,
-    MIN_SIGNAL_RISK_PERCENT,
+    ATR_STOP_MULTIPLIER,
+    LONG_RSI_MAX,
+    LONG_RSI_MIN,
+    MIN_VOLUME_RATIO,
+    NEAR_LEVEL_PERCENT,
+    SHORT_RSI_MAX,
+    SHORT_RSI_MIN,
+    SUPPORT_RESISTANCE_PERIOD,
     TP1_RR,
-    TP2_RR
-)
-
-from patterns import (
-    calculate_risk,
-    take_profit
+    TP2_RR,
 )
 
 
 # ==========================================================
-# LONG CONDITION
+# SUPPORTI / RESISTENZE / BREAKOUT
 # ==========================================================
 
-def is_long(
-    trend_score,
-    breakout,
-    rvol,
-    rvol_min
-):
+def support_resistance(df, period=SUPPORT_RESISTANCE_PERIOD):
+    closed = df.iloc[-(period + 1):-1]
 
-    return (
-
-        trend_score >= MIN_LONG_TREND_SCORE
-
-        and
-
-        breakout
-
-        and
-
-        rvol >= rvol_min
-
-    )
+    return float(closed["low"].min()), float(closed["high"].max())
 
 
-# ==========================================================
-# PRE-LONG CONDITION
-# ==========================================================
+def previous_support_resistance(df, period=SUPPORT_RESISTANCE_PERIOD):
+    previous = df.iloc[-(period + 2):-2]
 
-def is_prelong(
-    trend_score,
-    distance,
-    rvol,
-    distance_limit,
-    rvol_min
-):
-
-    return (
-
-        (
-
-            trend_score == 3
-
-            or
-
-            (
-
-                trend_score == 2
-
-                and
-
-                rvol >= 2
-
-            )
-
-        )
-
-        and
-
-        distance <= distance_limit
-
-        and
-
-        rvol >= rvol_min
-
-    )
+    return float(previous["low"].min()), float(previous["high"].max())
 
 
-# ==========================================================
-# WATCHLIST CONDITION
-# ==========================================================
-
-def is_watchlist(
-    distance,
-    limit
-):
-
-    return distance <= limit
-
-
-# ==========================================================
-# BUILD LONG SIGNAL
-# ==========================================================
-
-def valid_breakout_quality(
-    entry,
-    open_price,
-    candle_low,
-    resistance
-):
-
-    if resistance is None or entry <= 0:
-
+def near_level(price, level, max_distance_percent=NEAR_LEVEL_PERCENT):
+    if level <= 0:
         return False
 
-    breakout_extension = ((entry - resistance) / resistance) * 100
-
-    if breakout_extension < MIN_BREAKOUT_CLOSE_ABOVE_RESISTANCE * 100:
-
-        return False
-
-    if breakout_extension > MAX_RESISTANCE_EXTENSION_PERCENT:
-
-        return False
-
-    candle_range = entry - candle_low
-    candle_body = entry - open_price
-
-    if candle_range <= 0 or candle_body <= 0:
-
-        return False
-
-    return (candle_body / candle_range) >= MIN_BREAKOUT_BODY_PERCENT
+    distance = abs(price - level) / level * 100
+    return distance <= max_distance_percent
 
 
-def build_long_signal(
-    symbol,
-    entry,
-    support,
-    candle_low,
-    resistance,
-    rvol,
-    trend_score,
-    open_price=None
-):
+def long_breakout(close, previous_resistance):
+    return close > previous_resistance
 
-    # ------------------------------------------
-    # QUALITÀ BREAKOUT
-    # ------------------------------------------
 
-    if open_price is not None and not valid_breakout_quality(
-        entry,
-        open_price,
-        candle_low,
-        resistance
-    ):
+def short_breakdown(close, previous_support):
+    return close < previous_support
 
-        return None
 
-    # ------------------------------------------
-    # STOP LOSS
-    # ------------------------------------------
+# ==========================================================
+# CONDIZIONI LONG / SHORT
+# ==========================================================
 
-    if support is not None:
+def long_conditions(candle_5m, previous_5m, candle_15m, candle_1h, avg_volume, support, previous_resistance):
+    return {
+        "trend_1h": candle_1h["close"] > candle_1h["ema200"] or candle_1h["ema50"] > candle_1h["ema200"],
+        "trend_15m": candle_15m["close"] > candle_15m["ema50"],
+        "ema_5m": candle_5m["ema20"] > candle_5m["ema50"],
+        "rsi": LONG_RSI_MIN <= candle_5m["rsi"] <= LONG_RSI_MAX,
+        "macd": candle_5m["macd_hist"] > 0 or candle_5m["macd_hist"] > previous_5m["macd_hist"],
+        "volume": avg_volume > 0 and candle_5m["volume"] > MIN_VOLUME_RATIO * avg_volume,
+        "level": near_level(candle_5m["close"], support) or long_breakout(candle_5m["close"], previous_resistance),
+    }
 
-        stop = support
 
-    else:
+def short_conditions(candle_5m, previous_5m, candle_15m, candle_1h, avg_volume, resistance, previous_support):
+    return {
+        "trend_1h": candle_1h["close"] < candle_1h["ema200"] or candle_1h["ema50"] < candle_1h["ema200"],
+        "trend_15m": candle_15m["close"] < candle_15m["ema50"],
+        "ema_5m": candle_5m["ema20"] < candle_5m["ema50"],
+        "rsi": SHORT_RSI_MIN <= candle_5m["rsi"] <= SHORT_RSI_MAX,
+        "macd": candle_5m["macd_hist"] < 0 or candle_5m["macd_hist"] < previous_5m["macd_hist"],
+        "volume": avg_volume > 0 and candle_5m["volume"] > MIN_VOLUME_RATIO * avg_volume,
+        "level": near_level(candle_5m["close"], resistance) or short_breakdown(candle_5m["close"], previous_support),
+    }
 
-        stop = candle_low
 
-    # ------------------------------------------
-    # RISK
-    # ------------------------------------------
+def all_conditions_met(conditions):
+    return all(conditions.values())
 
-    risk = calculate_risk(
-        entry,
-        stop
-    )
+
+# ==========================================================
+# RISK MANAGEMENT
+# ==========================================================
+
+def build_signal(symbol, direction, entry, atr, candle_time):
+    risk = ATR_STOP_MULTIPLIER * atr
 
     if risk <= 0:
-
         return None
 
-    risk_percent = (risk / entry) * 100
-
-    if (
-        risk_percent < MIN_SIGNAL_RISK_PERCENT
-        or
-        risk_percent > MAX_SIGNAL_RISK_PERCENT
-    ):
-
-        return None
-
-    # ------------------------------------------
-    # TAKE PROFIT
-    # ------------------------------------------
-
-    tp1 = take_profit(
-        entry,
-        risk,
-        TP1_RR
-    )
-
-    tp2 = take_profit(
-        entry,
-        risk,
-        TP2_RR
-    )
-
-    reward = tp1 - entry
-
-    rr = reward / risk
-
-    # ------------------------------------------
-    # RECORD
-    # ------------------------------------------
+    if direction == "LONG":
+        stop = entry - risk
+        tp1 = entry + TP1_RR * risk
+        tp2 = entry + TP2_RR * risk
+    else:
+        stop = entry + risk
+        tp1 = entry - TP1_RR * risk
+        tp2 = entry - TP2_RR * risk
 
     return {
-
         "symbol": symbol,
-
+        "direction": direction,
         "entry": entry,
-
         "stop": stop,
-
-        "risk": round(risk, 4),
-
-        "risk_percent": round(risk_percent, 2),
-
         "tp1": tp1,
-
         "tp2": tp2,
-
-        "rr": round(rr, 2),
-
-        "trend_score": trend_score,
-
-        "resistance": resistance,
-
-        "rvol": round(rvol, 2)
-
+        "timeframe": "5m",
+        "candle_time": candle_time,
     }
-
-
-# ==========================================================
-# WATCHLIST RECORD
-# ==========================================================
-
-def watchlist_record(
-    symbol,
-    close,
-    support,
-    resistance,
-    distance,
-    trend_score,
-    rvol,
-    score
-):
-
-    return {
-
-        "symbol": symbol,
-
-        "close": close,
-
-        "support": support,
-
-        "resistance": resistance,
-
-        "distance": distance,
-
-        "trend_score": trend_score,
-
-        "rvol": round(rvol, 2),
-
-        "score": round(score, 2)
-
-    }
-
-
-# ==========================================================
-# PRELONG RECORD
-# ==========================================================
-
-def prelong_record(
-    symbol,
-    close,
-    distance,
-    trend_score,
-    rvol,
-    score
-):
-
-    return {
-
-        "symbol": symbol,
-
-        "close": close,
-
-        "distance": distance,
-
-        "trend_score": trend_score,
-
-        "rvol": round(rvol, 2),
-
-        "score": round(score, 2)
-
-    }
-
-
-# ==========================================================
-# DEBUG
-# ==========================================================
-
-def print_signal(signal):
-
-    print(
-
-        f"{signal['symbol']}"
-
-        f" | Entry={signal['entry']:.2f}"
-
-        f" | Stop={signal['stop']:.2f}"
-
-        f" | TP1={signal['tp1']:.2f}"
-
-        f" | TP2={signal['tp2']:.2f}"
-
-        f" | RR={signal['rr']:.2f}"
-
-    )

@@ -1,16 +1,18 @@
 """
-Crypto Scanner V6
-Entry Point
+Crypto Scanner - Entry Point Railway compatible.
 """
 
+import time
+
+from config import SCAN_INTERVAL_SECONDS
 from scanner import run_scanner
 
 
 def main():
-
-    run_scanner()
+    while True:
+        run_scanner()
+        time.sleep(SCAN_INTERVAL_SECONDS)
 
 
 if __name__ == "__main__":
-
     main()
