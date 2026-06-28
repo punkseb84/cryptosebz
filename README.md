@@ -195,35 +195,24 @@ config.py
 
 # Coin supportate
 
-- BTC
-- ETH
-- SOL
-- XRP
-- ADA
-- DOGE
-- LINK
-- AVAX
-- DOT
-- LTC
-- ATOM
-- UNI
-- AAVE
-- FIL
-- ALGO
-- ICP
-- APT
-- ARB
-- OP
-- NEAR
-- INJ
-- SUI
-- SEI
-- TIA
-- JUP
-- SHIB
-- PEPE
-- ETC
-- BCH
+Il bot monitora 16 coppie USD su Kraken:
+
+- BTC/USD (`XBTUSD`)
+- ETH/USD (`ETHUSD`)
+- SOL/USD (`SOLUSD`)
+- XRP/USD (`XRPUSD`)
+- BNB/USD (`BNBUSD`)
+- DOGE/USD (`DOGEUSD`)
+- ADA/USD (`ADAUSD`)
+- TRX/USD (`TRXUSD`)
+- LINK/USD (`LINKUSD`)
+- AVAX/USD (`AVAXUSD`)
+- SUI/USD (`SUIUSD`)
+- HYPE/USD (`HYPEUSD`)
+- BCH/USD (`BCHUSD`)
+- LTC/USD (`LTCUSD`)
+- XLM/USD (`XLMUSD`)
+- TON/USD (`TONUSD`)
 
 ---
 
