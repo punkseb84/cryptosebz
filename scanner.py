@@ -18,10 +18,13 @@ from signals import (
     support_resistance,
 )
 
-from telegram_bot import build_message, send_message
+from telegram_bot import build_message, send_message, signal_reasons
+from trade_history import TradeHistory
+from trade_monitor import monitor_open_trades
 
 
 _sent_signals = set()
+_trade_history = TradeHistory()
 
 
 def _is_duplicate(signal):
@@ -103,6 +106,7 @@ def run_scanner():
 
                     if signal is not None and not _is_duplicate(signal):
                         signals.append(signal)
+                        _trade_history.add_signal(signal, signal_reasons(signal))
                         send_message(build_message(signal))
 
             log(
@@ -114,6 +118,8 @@ def run_scanner():
 
         except Exception as e:
             log(symbol, f"Errore: {e}")
+
+    monitor_open_trades(_trade_history)
 
     print()
     print("=" * 60)
