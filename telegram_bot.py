@@ -32,8 +32,7 @@ def send_message(message):
 # COSTRUZIONE MESSAGGIO
 # ==========================================================
 
-def build_message(signal):
-    emoji = "🟢" if signal["direction"] == "LONG" else "🔴"
+def signal_reasons(signal):
     level_reason = "Supporto vicino o breakout confermato"
     ema_reason = "EMA 20 > EMA 50 su 5m"
     macd_reason = "MACD positivo o in miglioramento"
@@ -42,6 +41,21 @@ def build_message(signal):
         level_reason = "Resistenza vicina o breakdown confermato"
         ema_reason = "EMA 20 < EMA 50 su 5m"
         macd_reason = "MACD negativo o in peggioramento"
+
+    return [
+        "Trend 1h favorevole",
+        "Conferma 15m favorevole",
+        ema_reason,
+        "RSI in zona operativa",
+        macd_reason,
+        "Volume sufficiente",
+        level_reason,
+    ]
+
+
+def build_message(signal):
+    emoji = "🟢" if signal["direction"] == "LONG" else "🔴"
+    reasons = signal_reasons(signal)
 
     return (
         f"{emoji} {signal['direction']} {signal['symbol']}/USD\n"
@@ -52,11 +66,5 @@ def build_message(signal):
         "Timeframe: 5m\n"
         "Trend: confermato su 15m e 1h\n"
         "Motivi:\n"
-        "- Trend 1h favorevole\n"
-        "- Conferma 15m favorevole\n"
-        f"- {ema_reason}\n"
-        "- RSI in zona operativa\n"
-        f"- {macd_reason}\n"
-        "- Volume sufficiente\n"
-        f"- {level_reason}"
+        + "\n".join(f"- {reason}" for reason in reasons)
     )

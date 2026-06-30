@@ -70,6 +70,13 @@ TP2_RR = 2.5
 DEBUG = True
 
 # ==========================================================
+# MONITORAGGIO OPERAZIONI / REPORT
+# ==========================================================
+
+TRADE_HISTORY_FILE = os.environ.get("TRADE_HISTORY_FILE", "data/trade_history.json")
+DAILY_REPORT_STATE_FILE = os.environ.get("DAILY_REPORT_STATE_FILE", "data/daily_report_state.json")
+
+# ==========================================================
 # COMPATIBILITÀ MODULI LEGACY
 # ==========================================================
 
